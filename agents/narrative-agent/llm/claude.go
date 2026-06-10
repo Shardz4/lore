@@ -24,7 +24,8 @@ func NewAnthropicClient(apiKey string) *AnthropicClient {
 }
 
 func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, error) {
-	if c.apiKey == "" {
+	switch c.apiKey {
+	case "":
 		return "Mock Narrative: Actionable PM summary would appear here if ANTHROPIC_API_KEY was provided.", nil
 	}
 
