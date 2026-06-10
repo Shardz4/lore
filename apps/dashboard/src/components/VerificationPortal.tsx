@@ -13,7 +13,11 @@ export function VerificationPortal() {
       const parsed: Decision[] = JSON.parse(payload);
       const tree = generateTree(parsed);
       const calculatedRoot = getRoot(tree);
-      setResult(calculatedRoot === root);
+      const isValid = calculatedRoot === root;
+      setResult(isValid);
+      if (typeof window !== "undefined" && (window as any).pendo) {
+        (window as any).pendo.track("Proof Verified", { isValid, onChainRoot: root });
+      }
     } catch (e) {
       alert("Invalid JSON payload or Root. Ensure the payload is a valid JSON array of Decisions.");
       setResult(false);

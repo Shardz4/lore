@@ -14,7 +14,15 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"feed" | "verify" | "agents">("feed");
   const { isConnected, address } = useAccount();
-  const { connect } = useConnect();
+  const { connect } = useConnect({
+    mutation: {
+      onSuccess(data) {
+        if (typeof window !== "undefined" && (window as any).pendo) {
+          (window as any).pendo.track("Wallet Connected", { walletAddress: data.accounts[0], chainId: data.chainId });
+        }
+      }
+    }
+  });
 
   useEffect(() => {
     fetch("http://localhost:8080/api/v2/insights")
