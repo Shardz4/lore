@@ -1,4 +1,4 @@
-import { generateTree, getRoot, getProof, Decision } from "./merkle";
+import { generateTree, getRoot, getProof, Decision } from "./index";
 
 const decisions: Decision[] = [
     {
