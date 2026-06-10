@@ -1,0 +1,9 @@
+C:\Users\CREWMOBILE\Desktop\lore\agents\analyst-agent\target\debug\deps\opentelemetry_semantic_conventions-ccdf3e7bad186456.d: C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\lib.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\resource.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\trace.rs
+
+C:\Users\CREWMOBILE\Desktop\lore\agents\analyst-agent\target\debug\deps\libopentelemetry_semantic_conventions-ccdf3e7bad186456.rlib: C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\lib.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\resource.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\trace.rs
+
+C:\Users\CREWMOBILE\Desktop\lore\agents\analyst-agent\target\debug\deps\libopentelemetry_semantic_conventions-ccdf3e7bad186456.rmeta: C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\lib.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\resource.rs C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\trace.rs
+
+C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\lib.rs:
+C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\resource.rs:
+C:\Users\CREWMOBILE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\opentelemetry-semantic-conventions-0.13.0\src\trace.rs:
