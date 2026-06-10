@@ -44,3 +44,7 @@ pip-log.txt
 # Go
 bin/
 pkg/
+*.exe
+
+# Rust
+target/
