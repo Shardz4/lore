@@ -66,4 +66,4 @@ Requires a `.env` file in `agents/narrative-agent` with:
 | **Redis** | `6379` | Standard Redis port |
 | **Jaeger UI** | `16686` | Web interface for viewing traces |
 | **Jaeger OTLP** | `4317` (gRPC), `4318` (HTTP) | OpenTelemetry receivers |
-| **Narrative API** | `8080` | REST API (`GET /api/v1/insights`) |
+| **Narrative API** | `8080` | REST API (`/api/v1/insights` array, `/api/v2/insights` envelope) |

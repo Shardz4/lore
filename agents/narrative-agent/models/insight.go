@@ -11,4 +11,5 @@ type InsightBundle struct {
 type NarrativeResponse struct {
 	Insight   InsightBundle `json:"insight"`
 	Narrative string        `json:"narrative"`
+	IsMock    bool          `json:"is_mock"`
 }

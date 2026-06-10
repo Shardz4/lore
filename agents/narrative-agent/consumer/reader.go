@@ -69,7 +69,7 @@ func (r *Reader) Start(ctx context.Context) {
 						continue
 					}
 
-					narrative, err := r.llmClient.GenerateSummary(ctx, insight)
+					narrative, isMock, err := r.llmClient.GenerateSummary(ctx, insight)
 					if err != nil {
 						log.Printf("LLM Generation failed for msg %s: %v. Message will NOT be ACKed.", msg.ID, err)
 						continue // DO NOT ACK - DLQ Sweeper will pick this up
@@ -78,6 +78,7 @@ func (r *Reader) Start(ctx context.Context) {
 					r.apiServer.AddNarrative(models.NarrativeResponse{
 						Insight:   insight,
 						Narrative: narrative,
+						IsMock:    isMock,
 					})
 
 					r.rdb.XAck(ctx, stream, group, msg.ID)
