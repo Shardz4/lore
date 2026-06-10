@@ -23,10 +23,10 @@ func NewAnthropicClient(apiKey string) *AnthropicClient {
 	}
 }
 
-func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, error) {
+func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, bool, error) {
 	switch c.apiKey {
 	case "":
-		return "Mock Narrative: Actionable PM summary would appear here if ANTHROPIC_API_KEY was provided.", nil
+		return "Mock Narrative: Actionable PM summary would appear here if ANTHROPIC_API_KEY was provided.", true, nil
 	}
 
 	prompt := fmt.Sprintf("Act as an expert Product Manager. We detected a %s anomaly. Description: %s. Event count: %d. Provide a concise, actionable summary of what to investigate.", insight.InsightType, insight.Description, insight.EventCount)
@@ -65,7 +65,7 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 		if resp.StatusCode != 200 {
 			var errResp map[string]any
 			json.NewDecoder(resp.Body).Decode(&errResp)
-			return "", fmt.Errorf("anthropic API error: %d, %v", resp.StatusCode, errResp)
+			return "", false, fmt.Errorf("anthropic API error: %d, %v", resp.StatusCode, errResp)
 		}
 
 		var result struct {
@@ -75,14 +75,14 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 		}
 
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return "", fmt.Errorf("failed to decode response: %w", err)
+			return "", false, fmt.Errorf("failed to decode response: %w", err)
 		}
 
 		if len(result.Content) > 0 {
-			return result.Content[0].Text, nil
+			return result.Content[0].Text, false, nil
 		}
-		return "", fmt.Errorf("empty response from Claude")
+		return "", false, fmt.Errorf("empty response from Claude")
 	}
 
-	return "", fmt.Errorf("failed after 3 retries: %w", lastErr)
+	return "", false, fmt.Errorf("failed after 3 retries: %w", lastErr)
 }
