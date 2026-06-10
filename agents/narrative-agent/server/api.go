@@ -41,7 +41,22 @@ func (s *APIServer) AddNarrative(n models.NarrativeResponse) {
 }
 
 func (s *APIServer) Start() error {
+	// Legacy endpoint: returns raw array to prevent breaking existing consumers
 	http.HandleFunc("/api/v1/insights", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		s.mu.RLock()
+		defer s.mu.RUnlock()
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s.cache)
+	})
+
+	// New endpoint: returns the wrapped API envelope
+	http.HandleFunc("/api/v2/insights", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
