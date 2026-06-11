@@ -28,12 +28,12 @@ export function VerificationPortal() {
     <div className="space-y-6 w-full font-sans">
       <div className="grid grid-cols-1 gap-6">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-300 flex items-center gap-2 uppercase tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          <label className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             IPFS Evidence Payload (JSON)
           </label>
           <textarea 
-            className="w-full p-4 border border-slate-700/50 rounded-xl font-mono text-sm bg-[#0d1117] text-indigo-300 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner placeholder:text-slate-700 resize-y" 
+            className="w-full p-5 border border-slate-200 rounded-2xl font-mono text-sm bg-slate-50 text-slate-700 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-inner placeholder:text-slate-400 resize-y" 
             rows={8}
             value={payload}
             onChange={(e) => setPayload(e.target.value)}
@@ -42,12 +42,12 @@ export function VerificationPortal() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-300 flex items-center gap-2 uppercase tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+          <label className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
             On-Chain Merkle Root
           </label>
           <Input 
-            className="w-full font-mono bg-[#0d1117] text-purple-300 border-slate-700/50 rounded-xl py-6 px-4 focus-visible:ring-2 focus-visible:ring-purple-500/50 placeholder:text-slate-700 text-base"
+            className="w-full font-mono bg-slate-50 text-slate-700 border-slate-200 rounded-2xl py-7 px-5 focus-visible:ring-2 focus-visible:ring-teal-500/50 placeholder:text-slate-400 text-base shadow-inner"
             value={root}
             onChange={(e) => setRoot(e.target.value)}
             placeholder="0x..."
@@ -57,17 +57,17 @@ export function VerificationPortal() {
 
       <Button 
         onClick={handleVerify} 
-        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-6 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all border-none uppercase tracking-widest mt-4"
+        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-7 rounded-2xl shadow-lg hover:shadow-xl transition-all border-none uppercase tracking-widest mt-6 text-lg"
       >
         Compute & Verify Proof
       </Button>
 
       {result !== null && (
-        <div className={`mt-6 p-6 rounded-xl text-center border shadow-lg ${result ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.15)]' : 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.15)]'}`}>
-          <div className="font-mono font-bold tracking-tight text-lg mb-1">
+        <div className={`mt-8 p-6 rounded-2xl text-center border shadow-sm ${result ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
+          <div className="font-sans font-black tracking-tight text-xl mb-1">
             {result ? "SYSTEM VALIDATED" : "INTEGRITY BREACH"}
           </div>
-          <p className="text-sm opacity-80">
+          <p className="text-sm font-medium opacity-80">
             {result ? "Cryptographic path traces successfully back to the on-chain root." : "Evidence payload does not match the blockchain record."}
           </p>
         </div>
