@@ -29,7 +29,7 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       
       alert(`Mock Deployment Success!\n\nMerkle Root: ${root}\nMock IPFS CID: ${mockCid}`);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, mockCid, walletAddress: address });
+        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, mockCid });
       }
       onSuccess();
     } catch (err) {
