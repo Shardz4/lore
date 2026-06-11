@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY === undefined) {
         alert("Firebase keys are missing in .env.local! Falling back to Mock Login.");
         setUser({ uid: "mock_user", displayName: "Mock User", email: "mock@example.com" } as User);
+      } else {
+        alert("Authentication failed. Please ensure popups are allowed by your browser or try again later.");
       }
     }
   };
