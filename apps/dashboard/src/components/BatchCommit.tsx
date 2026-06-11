@@ -43,24 +43,24 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
   if (selectedInsights.length === 0) return null;
 
   return (
-    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl p-4 bg-slate-900/80 backdrop-blur-md border border-indigo-500/30 rounded-2xl flex justify-between items-center shadow-[0_10px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(99,102,241,0.15)] z-50">
+    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl p-4 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-3xl flex justify-between items-center shadow-[0_20px_60px_rgba(0,0,0,0.1),0_0_30px_rgba(16,185,129,0.15)] z-50">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-          <span className="font-bold text-indigo-400">{selectedInsights.length}</span>
+        <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
+          <span className="font-bold text-xl text-emerald-600">{selectedInsights.length}</span>
         </div>
         <div>
-          <p className="font-semibold text-slate-200">Insights Selected</p>
-          <p className="text-xs text-slate-400 font-mono">Ready for Merkle Tree generation</p>
+          <p className="font-bold text-slate-900 text-lg">Insights Selected</p>
+          <p className="text-sm text-slate-500 font-medium">Ready for Merkle Tree generation</p>
         </div>
       </div>
       <Button 
         onClick={handleCommit} 
         disabled={isPinning || !isConnected}
-        className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all border-none font-semibold px-6 py-5 rounded-xl"
+        className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base"
       >
         {isPinning ? (
           <span className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             Generating Root...
           </span>
         ) : "Sign & Commit Batch"}

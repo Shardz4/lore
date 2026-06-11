@@ -6,6 +6,8 @@ import { baseSepolia } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 import { useState, type ReactNode } from 'react';
 
+import { AuthProvider } from '@/components/AuthProvider';
+
 export const config = createConfig({
   chains: [baseSepolia],
   connectors: [injected()],
@@ -18,10 +20,12 @@ export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </WagmiProvider>
+    <AuthProvider>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </WagmiProvider>
+    </AuthProvider>
   );
 }
