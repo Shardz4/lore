@@ -23,7 +23,7 @@ export default function Dashboard() {
     mutation: {
       onSuccess(data) {
         if (typeof window !== "undefined" && (window as any).pendo) {
-          (window as any).pendo.track("Wallet Connected", { walletAddress: data.accounts[0], chainId: data.chainId });
+          (window as any).pendo.track("Wallet Connected", { chainId: data.chainId });
         }
       }
     }
