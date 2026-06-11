@@ -5,7 +5,7 @@ import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
 
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
 
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;
@@ -28,6 +28,9 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       const root = getRoot(tree) as `0x${string}`;
       
       alert(`Mock Deployment Success!\n\nMerkle Root: ${root}\nMock IPFS CID: ${mockCid}`);
+      if (typeof window !== "undefined" && (window as any).pendo) {
+        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, mockCid, walletAddress: address });
+      }
       onSuccess();
     } catch (err) {
       console.error(err);
