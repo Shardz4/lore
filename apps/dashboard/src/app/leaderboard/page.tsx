@@ -1,8 +1,7 @@
 "use client";
 
-import { Header } from "@/components/Header";
+
 import { useState, useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
 
 type Agent = {
   id: string;
@@ -34,7 +33,11 @@ export default function Leaderboard() {
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-900/10 blur-[150px]"></div>
       </div>
       
-      <Header />
+      <header className="absolute top-6 left-6 z-50">
+        <a href="/dashboard" className="text-emerald-400 hover:text-emerald-300 flex items-center gap-2 font-medium transition-colors">
+          &larr; Back to Dashboard
+        </a>
+      </header>
 
       <main className="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div className="mb-16">
@@ -80,9 +83,9 @@ export default function Leaderboard() {
                     </div>
                   </td>
                   <td className="p-6">
-                    {agent.status === "TRUSTED" && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">Trusted Partner</Badge>}
-                    {agent.status === "WARNING" && <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20">At Risk</Badge>}
-                    {agent.status === "SLASHED" && <Badge className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20">Slashed / Banned</Badge>}
+                    {agent.status === "TRUSTED" && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 transition-colors hover:bg-emerald-500/20">Trusted Partner</span>}
+                    {agent.status === "WARNING" && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 transition-colors hover:bg-amber-500/20">At Risk</span>}
+                    {agent.status === "SLASHED" && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 transition-colors hover:bg-red-500/20">Slashed / Banned</span>}
                   </td>
                 </tr>
               ))}
