@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWriteContract, useAccount } from "wagmi";
 import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
@@ -6,6 +6,14 @@ import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
+  const [reputationScore, setReputationScore] = useState<number>(100);
+
+  useEffect(() => {
+    // In production, this fetches from the Go backend's Reputation Module.
+    // For local testing, you can change this in localStorage.
+    const score = parseFloat(localStorage.getItem("agent_reputation") || "100");
+    setReputationScore(score);
+  }, [selectedInsights]);
 
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;
@@ -57,10 +65,10 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       </div>
       <Button 
         onClick={handleCommit} 
-        disabled={isPinning || !isConnected}
-        className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base"
+        disabled={isPinning || !isConnected || reputationScore < 60}
+        className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${reputationScore < 60 ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500 text-white"}`}
       >
-        {isPinning ? (
+        {reputationScore < 60 ? "BANNED: Reputation < 60%" : isPinning ? (
           <span className="flex items-center gap-2">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             Generating ZK-Proof...
