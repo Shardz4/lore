@@ -1,0 +1,9 @@
+[package]
+name = "zk-circuit-host"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+methods = { path = "../methods" }
+risc0-zkvm = "1.0.5"
+serde = { version = "1.0", features = ["derive"] }
