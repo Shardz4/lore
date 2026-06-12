@@ -12,11 +12,13 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
     setIsPinning(true);
 
     try {
-      // 1. Mock IPFS Pinning
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
+      // 1. Generate Zero-Knowledge Proof (Simulated for UI)
+      // In production, the agent's ZKVM outputs the proof, and the dashboard submits it.
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const mockZkProof = `0xzk${Math.random().toString(16).substring(2, 10)}`;
+      const mockJournalCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
       
-      // 2. Generate Merkle Root locally
+      // 2. Generate Merkle Root of the public output
       const decisions: Decision[] = selectedInsights.map(item => ({
         insightType: item.insight.insight_type,
         description: item.insight.description,
@@ -27,9 +29,9 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
       
-      alert(`Mock Deployment Success!\n\nMerkle Root: ${root}\nMock IPFS CID: ${mockCid}`);
+      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${mockZkProof}\nPublic Journal CID: ${mockJournalCid}\nMerkle Root: ${root}`);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, mockCid });
+        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid: mockJournalCid, zkProof: mockZkProof });
       }
       onSuccess();
     } catch (err) {
@@ -61,7 +63,7 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
         {isPinning ? (
           <span className="flex items-center gap-2">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Generating Root...
+            Generating ZK-Proof...
           </span>
         ) : "Sign & Commit Batch"}
       </Button>
