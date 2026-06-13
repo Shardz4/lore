@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -25,6 +26,7 @@ type ReputationResponse struct {
 
 type APIServer struct {
 	port           string
+	allowedOrigin  string // H2 FIX: Replaces CORS wildcard "*"
 	cache          []models.NarrativeResponse
 	totalProcessed int64
 	mu             sync.RWMutex
@@ -39,8 +41,14 @@ type AgentReputationRecord struct {
 }
 
 func NewAPIServer(port string) *APIServer {
+	// H2 FIX: Read allowed CORS origin from env. Defaults to localhost for local dev.
+	origin := os.Getenv("ALLOWED_ORIGIN")
+	if origin == "" {
+		origin = "http://localhost:3000"
+	}
 	return &APIServer{
 		port:            port,
+		allowedOrigin:   origin,
 		cache:           make([]models.NarrativeResponse, 0, 50),
 		reputationStore: make(map[string]*AgentReputationRecord),
 	}
@@ -86,7 +94,7 @@ func (s *APIServer) GetReputationScore(agentID string) float64 {
 func (s *APIServer) Start() error {
 	// Legacy endpoint: returns raw array to prevent breaking existing consumers
 	http.HandleFunc("/api/v1/insights", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", s.allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -109,7 +117,7 @@ func (s *APIServer) Start() error {
 
 	// New endpoint: returns the wrapped API envelope
 	http.HandleFunc("/api/v2/insights", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", s.allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -141,7 +149,7 @@ func (s *APIServer) Start() error {
 	// The dashboard fetches from here instead of reading localStorage.
 	// This is the authoritative source of truth for agent reputation.
 	http.HandleFunc("/api/v1/reputation/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", s.allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

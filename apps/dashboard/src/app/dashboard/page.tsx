@@ -35,8 +35,10 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
   useEffect(() => {
-    fetch("http://localhost:8080/api/v2/insights")
+    fetch(`${API_BASE}/api/v2/insights`)
       .then(res => res.json())
       .then(setData)
       .catch(console.error);
