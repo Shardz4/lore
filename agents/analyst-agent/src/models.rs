@@ -17,6 +17,7 @@ pub struct PayloadMetadata<'a> {
 #[derive(Debug, Deserialize)]
 pub struct TelemetryInfo<'a> {
     pub trace_id: &'a str,
+    pub agent_id: Option<&'a str>,
 }
 
 #[derive(Debug, Serialize)]
@@ -25,5 +26,6 @@ pub struct InsightBundle {
     pub description: String,
     pub event_count: usize,
     pub source_trace_id: String,
+    pub agent_id: String,
     pub timestamp: i64,
 }

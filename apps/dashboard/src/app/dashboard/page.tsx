@@ -36,13 +36,18 @@ export default function Dashboard() {
   }, [user, loading, router]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  const API_TOKEN = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/v2/insights`)
+    fetch(`${API_BASE}/api/v2/insights`, {
+      headers: {
+        "Authorization": `Bearer ${API_TOKEN}`,
+      },
+    })
       .then(res => res.json())
       .then(setData)
       .catch(console.error);
-  }, []);
+  }, [API_BASE, API_TOKEN]);
 
   const toggleSelect = (id: string, checked: boolean) => {
     const next = new Set(selectedIds);

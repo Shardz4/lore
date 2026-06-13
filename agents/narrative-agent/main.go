@@ -31,7 +31,7 @@ func main() {
 	defer cancel()
 
 	llmClient := llm.NewAnthropicClient(cfg.AnthropicAPIKey)
-	apiServer := server.NewAPIServer(cfg.ServerPort)
+	apiServer := server.NewAPIServer(cfg.ServerPort, rdb)
 	
 	// Start DLQ Sweeper
 	sweeper := dlq.NewSweeper(rdb, "lore:stream:insights", "narrative_processors")

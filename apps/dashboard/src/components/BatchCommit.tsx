@@ -4,6 +4,7 @@ import { useWriteContract, useAccount } from "wagmi";
 import { generateTree, getRoot, Decision, generateProofForJournal } from "@lore/crypto-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_TOKEN = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
 
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
@@ -21,7 +22,11 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
     }
     
     setReputationLoading(true);
-    fetch(`${API_BASE}/api/v1/reputation/${address}`)
+    fetch(`${API_BASE}/api/v1/reputation/${address}`, {
+      headers: {
+        "Authorization": `Bearer ${API_TOKEN}`,
+      },
+    })
       .then(res => {
         if (!res.ok) throw new Error("Reputation API unavailable");
         return res.json();

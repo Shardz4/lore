@@ -50,10 +50,10 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string) (models.Payload, error) {
+func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, agentID string) (models.Payload, error) {
 	if c.mcpClient == nil {
 		log.Println("MCP Client not connected, using fallback generator")
-		return GenerateMockPayload(traceID), nil
+		return GenerateMockPayload(traceID, agentID), nil
 	}
 
 	// Requesting data from Novus using a hypothetical tool name
@@ -64,12 +64,12 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string) (mo
 	resp, err := c.mcpClient.CallTool(ctx, toolCallReq)
 	if err != nil {
 		log.Printf("MCP Tool Call failed: %v, using fallback generator\n", err)
-		return GenerateMockPayload(traceID), nil
+		return GenerateMockPayload(traceID, agentID), nil
 	}
 
 	if resp.IsError {
 		log.Printf("MCP Tool Call returned error, using fallback generator\n")
-		return GenerateMockPayload(traceID), nil
+		return GenerateMockPayload(traceID, agentID), nil
 	}
 
 	var rawData map[string]any
@@ -85,6 +85,7 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string) (mo
 			Timestamp: time.Now().UnixMilli(),
 			Telemetry: models.TelemetryInfo{
 				TraceID: traceID,
+				AgentID: agentID,
 			},
 		},
 		Data: rawData,

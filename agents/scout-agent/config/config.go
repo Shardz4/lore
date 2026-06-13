@@ -13,6 +13,7 @@ type Config struct {
 	RedisAddr        string
 	OtelEndpoint     string
 	PollInterval     time.Duration
+	AgentID          string
 }
 
 func Load() *Config {
@@ -42,10 +43,16 @@ func Load() *Config {
 		pollInterval = 5 * time.Minute // default to 5 minutes
 	}
 
+	agentID := os.Getenv("AGENT_ID")
+	if agentID == "" {
+		agentID = "agent-001" // default telemetry agent ID
+	}
+
 	return &Config{
 		NovusMcpEndpoint: mcpEndpoint,
 		RedisAddr:        redisAddr,
 		OtelEndpoint:     otelEndpoint,
 		PollInterval:     pollInterval,
+		AgentID:          agentID,
 	}
 }
