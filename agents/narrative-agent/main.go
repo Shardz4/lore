@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"lore/narrative-agent/config"
@@ -22,6 +23,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Invalid Redis URL: %v", err)
 	}
+	// Set ReadTimeout to be greater than XReadGroup Block timeout (5000ms / 5s) to prevent TCP i/o timeouts
+	opt.ReadTimeout = 10 * time.Second
 	rdb := redis.NewClient(opt)
 
 	ctx, cancel := context.WithCancel(context.Background())
