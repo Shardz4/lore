@@ -2,14 +2,19 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // H3 FIX: No more dummy fallbacks. If env vars are missing, we fail loudly.
-const requiredEnvVars = [
-  "NEXT_PUBLIC_FIREBASE_API_KEY",
-  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_APP_ID",
-] as const;
+// Note: We check env variables using static literals because dynamic process.env[key]
+// access is not supported by Next.js client-side bundler replacement.
+const envVars = {
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
-const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
+const missingVars = Object.entries(envVars)
+  .filter(([_, value]) => !value)
+  .map(([key]) => key);
+
 if (missingVars.length > 0) {
   console.error(
     `[Lore] Missing required Firebase environment variables: ${missingVars.join(", ")}. ` +
