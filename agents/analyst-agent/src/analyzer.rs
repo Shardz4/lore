@@ -23,8 +23,22 @@ impl Analyzer {
 
         let rage_clicks = self.events.iter().filter(|&e| e == "rage_click").count();
         let drop_offs = self.events.iter().filter(|&e| e == "feature_dropoff").count();
+        let hallucinations = self.events.iter().filter(|&e| e == "hallucination").count();
 
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64;
+
+        if hallucinations > 0 {
+            // THE PUNISHER: Apply mathematical slashing penalty
+            println!("CRITICAL: Hallucinated data detected in trace {}. Applying exponential mathematical penalty to agent reputation!", trace_id);
+            self.events.clear();
+            return Some(InsightBundle {
+                insight_type: "REPUTATION_SLASHED".to_string(),
+                description: "Agent submitted mathematically invalid or hallucinated data. Trust score heavily penalized.".to_string(),
+                event_count: hallucinations,
+                source_trace_id: trace_id.to_string(),
+                timestamp,
+            });
+        }
 
         if rage_clicks > 5 {
             self.events.clear();

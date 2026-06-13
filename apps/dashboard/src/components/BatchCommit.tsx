@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWriteContract, useAccount } from "wagmi";
 import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
@@ -6,17 +6,27 @@ import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
+  const [reputationScore, setReputationScore] = useState<number>(100);
+
+  useEffect(() => {
+    // In production, this fetches from the Go backend's Reputation Module.
+    // For local testing, you can change this in localStorage.
+    const score = parseFloat(localStorage.getItem("agent_reputation") || "100");
+    setReputationScore(score);
+  }, [selectedInsights]);
 
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;
     setIsPinning(true);
 
     try {
-      // 1. Mock IPFS Pinning
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
+      // 1. Generate Zero-Knowledge Proof (Simulated for UI)
+      // In production, the agent's ZKVM outputs the proof, and the dashboard submits it.
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const mockZkProof = `0xzk${Math.random().toString(16).substring(2, 10)}`;
+      const mockJournalCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
       
-      // 2. Generate Merkle Root locally
+      // 2. Generate Merkle Root of the public output
       const decisions: Decision[] = selectedInsights.map(item => ({
         insightType: item.insight.insight_type,
         description: item.insight.description,
@@ -27,9 +37,9 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
       
-      alert(`Mock Deployment Success!\n\nMerkle Root: ${root}\nMock IPFS CID: ${mockCid}`);
+      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${mockZkProof}\nPublic Journal CID: ${mockJournalCid}\nMerkle Root: ${root}`);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, mockCid });
+        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid: mockJournalCid, zkProof: mockZkProof });
       }
       onSuccess();
     } catch (err) {
@@ -55,13 +65,13 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       </div>
       <Button 
         onClick={handleCommit} 
-        disabled={isPinning || !isConnected}
-        className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base"
+        disabled={isPinning || !isConnected || reputationScore < 60}
+        className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${reputationScore < 60 ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500 text-white"}`}
       >
-        {isPinning ? (
+        {reputationScore < 60 ? "BANNED: Reputation < 60%" : isPinning ? (
           <span className="flex items-center gap-2">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Generating Root...
+            Generating ZK-Proof...
           </span>
         ) : "Sign & Commit Batch"}
       </Button>

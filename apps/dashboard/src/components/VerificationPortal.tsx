@@ -1,25 +1,27 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
+import { generateTree, getRoot, Decision, verifyZKProof } from "@lore/crypto-utils";
 
 export function VerificationPortal() {
   const [payload, setPayload] = useState("");
   const [root, setRoot] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
 
+  const [proof, setProof] = useState("");
+
   const handleVerify = () => {
     try {
       const parsed: Decision[] = JSON.parse(payload);
-      const tree = generateTree(parsed);
-      const calculatedRoot = getRoot(tree);
-      const isValid = calculatedRoot === root;
+      const isZkValid = verifyZKProof(proof, parsed);
+      const calculatedRoot = getRoot(generateTree(parsed));
+      const isValid = isZkValid && (calculatedRoot === root);
       setResult(isValid);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Proof Verified", { isValid, onChainRoot: root });
+        (window as any).pendo.track("Proof Verified", { isValid, onChainRoot: root, isZkValid });
       }
     } catch (e) {
-      alert("Invalid JSON payload or Root. Ensure the payload is a valid JSON array of Decisions.");
+      alert("Invalid JSON payload or Proof. Ensure the payload is a valid JSON array.");
       setResult(false);
     }
   };
@@ -30,7 +32,7 @@ export function VerificationPortal() {
         <div className="space-y-2">
           <label className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            IPFS Evidence Payload (JSON)
+            Public Journal (JSON)
           </label>
           <textarea 
             className="w-full p-5 border border-slate-200 rounded-2xl font-mono text-sm bg-slate-50 text-slate-700 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-inner placeholder:text-slate-400 resize-y" 
@@ -44,10 +46,23 @@ export function VerificationPortal() {
         <div className="space-y-2">
           <label className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
             <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+            ZK-SNARK Proof (Hex)
+          </label>
+          <Input 
+            className="w-full font-mono bg-slate-50 text-slate-700 border-slate-200 rounded-2xl py-4 px-5 focus-visible:ring-2 focus-visible:ring-teal-500/50 placeholder:text-slate-400 text-base shadow-inner"
+            value={proof}
+            onChange={(e) => setProof(e.target.value)}
+            placeholder="0xzk..."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wide">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
             On-Chain Merkle Root
           </label>
           <Input 
-            className="w-full font-mono bg-slate-50 text-slate-700 border-slate-200 rounded-2xl py-7 px-5 focus-visible:ring-2 focus-visible:ring-teal-500/50 placeholder:text-slate-400 text-base shadow-inner"
+            className="w-full font-mono bg-slate-50 text-slate-700 border-slate-200 rounded-2xl py-4 px-5 focus-visible:ring-2 focus-visible:ring-slate-500/50 placeholder:text-slate-400 text-base shadow-inner"
             value={root}
             onChange={(e) => setRoot(e.target.value)}
             placeholder="0x..."
@@ -68,7 +83,7 @@ export function VerificationPortal() {
             {result ? "SYSTEM VALIDATED" : "INTEGRITY BREACH"}
           </div>
           <p className="text-sm font-medium opacity-80">
-            {result ? "Cryptographic path traces successfully back to the on-chain root." : "Evidence payload does not match the blockchain record."}
+            {result ? "Zero-Knowledge Proof verified mathematically and traces to the on-chain root." : "Proof is invalid or does not match the public journal."}
           </p>
         </div>
       )}
