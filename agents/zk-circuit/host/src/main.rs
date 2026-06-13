@@ -1,9 +1,12 @@
 use methods::{ZK_CIRCUIT_GUEST_ELF, ZK_CIRCUIT_GUEST_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv};
+use std::env;
 
 fn main() {
-    // This is the private data we want to prove we processed correctly without revealing it
-    let private_input = String::from("{\"action\": \"trade\", \"secret\": \"SECRET_ENTERPRISE_KEY\"}");
+    // C3 FIX: NEVER hardcode secrets. Read private input from the environment.
+    // Usage: PRIVATE_INPUT='{"action": "trade", "data": "..."}' cargo run
+    let private_input = env::var("PRIVATE_INPUT")
+        .expect("PRIVATE_INPUT environment variable must be set. NEVER hardcode secrets in source code.");
 
     println!("Starting ZK Proof generation...");
 
