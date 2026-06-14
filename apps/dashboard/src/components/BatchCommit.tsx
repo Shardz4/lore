@@ -95,11 +95,13 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
         onClick={handleCommit} 
         disabled={isPinning || !isConnected || reputationLoading || (reputationScore !== null && reputationScore < 60)}
         className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${
-          reputationLoading || isPinning || !isConnected 
-            ? "bg-slate-400 text-white cursor-not-allowed" 
-            : (reputationScore !== null && reputationScore < 60) 
-              ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" 
-              : "bg-emerald-600 hover:bg-emerald-500 text-white"
+          isPinning 
+            ? "bg-emerald-600/75 text-white cursor-wait"
+            : reputationLoading || !isConnected 
+              ? "bg-slate-400 text-white cursor-not-allowed" 
+              : (reputationScore !== null && reputationScore < 60) 
+                ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" 
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
         }`}
       >
         {reputationLoading ? "Checking reputation..." : (reputationScore !== null && reputationScore < 60) ? "BANNED: Reputation < 60%" : isPinning ? (
