@@ -7,6 +7,7 @@ import { injected } from 'wagmi/connectors';
 import { useState, type ReactNode } from 'react';
 
 import { AuthProvider } from '@/components/AuthProvider';
+import { PendoProvider } from '@/components/PendoProvider';
 
 export const config = createConfig({
   chains: [baseSepolia],
@@ -21,11 +22,13 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-      </WagmiProvider>
+      <PendoProvider>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </WagmiProvider>
+      </PendoProvider>
     </AuthProvider>
   );
 }
