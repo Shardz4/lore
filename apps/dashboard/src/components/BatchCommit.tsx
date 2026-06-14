@@ -2,18 +2,38 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWriteContract, useAccount } from "wagmi";
 import { generateTree, getRoot, Decision, generateProofForJournal } from "@lore/crypto-utils";
+import { useAuth } from "./AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-const API_TOKEN = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
 
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
   const [reputationScore, setReputationScore] = useState<number | null>(null);
   const [reputationLoading, setReputationLoading] = useState(true);
+  const { user } = useAuth();
+  const [apiToken, setApiToken] = useState<string>("");
 
   useEffect(() => {
-    // C2 FIX: Fetch reputation from the server-side Go backend, NOT localStorage.
+    async function fetchToken() {
+      if (user) {
+        if (user.uid === "mock_user") {
+          setApiToken(process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token");
+        } else {
+          try {
+            const token = await user.getIdToken();
+            setApiToken(token);
+          } catch (e) {
+            console.error("Error getting Firebase ID token:", e);
+          }
+        }
+      }
+    }
+    fetchToken();
+  }, [user]);
+
+  useEffect(() => {
+    // Fetch reputation from the server-side Go backend, NOT localStorage.
     // The server is the single source of truth for reputation scores.
     if (!address) {
       setReputationScore(100);
@@ -21,10 +41,12 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       return;
     }
     
+    if (!apiToken) return;
+
     setReputationLoading(true);
     fetch(`${API_BASE}/api/v1/reputation/${address}`, {
       headers: {
-        "Authorization": `Bearer ${API_TOKEN}`,
+        "Authorization": `Bearer ${apiToken}`,
       },
     })
       .then(res => {
@@ -40,7 +62,7 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
         setReputationScore(100);
       })
       .finally(() => setReputationLoading(false));
-  }, [address]);
+  }, [address, apiToken]);
 
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;

@@ -54,9 +54,9 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 			time.Sleep(time.Duration(attempt*2) * time.Second)
 			continue
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode == 429 {
+			resp.Body.Close()
 			lastErr = fmt.Errorf("rate limited (429)")
 			time.Sleep(time.Duration(attempt*2) * time.Second)
 			continue
@@ -65,6 +65,7 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 		if resp.StatusCode != 200 {
 			var errResp map[string]any
 			json.NewDecoder(resp.Body).Decode(&errResp)
+			resp.Body.Close()
 			return "", false, fmt.Errorf("anthropic API error: %d, %v", resp.StatusCode, errResp)
 		}
 
@@ -74,7 +75,9 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 			} `json:"content"`
 		}
 
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		resp.Body.Close()
+		if err != nil {
 			return "", false, fmt.Errorf("failed to decode response: %w", err)
 		}
 

@@ -44,7 +44,7 @@ export function FeedCard({ insight, isSelected, onSelect }: FeedCardProps) {
         </p>
         <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-200 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-          <p className="text-xs font-bold text-emerald-600 mb-2 tracking-wider uppercase">AI Generated Narrative</p>
+          <p className="text-xs font-bold text-emerald-600 mb-2 tracking-wider uppercase">AI Summary</p>
           <p className="text-sm text-slate-700 leading-relaxed">{insight.narrative}</p>
         </div>
       </CardContent>

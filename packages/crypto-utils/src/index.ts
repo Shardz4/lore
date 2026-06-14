@@ -1,10 +1,25 @@
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import { keccak256, toUtf8Bytes } from "ethers";
 
 export interface Decision {
     insightType: string;
     description: string;
     traceId: string;
     timestamp: number;
+}
+
+/**
+ * Recursively stringifies any JS value, sorting object keys to guarantee deterministic output.
+ */
+export function deterministicStringify(val: any): string {
+    if (val === null) return "null";
+    if (typeof val !== "object") return JSON.stringify(val);
+    if (Array.isArray(val)) {
+        return "[" + val.map(deterministicStringify).join(",") + "]";
+    }
+    const keys = Object.keys(val).sort();
+    const parts = keys.map(k => `${JSON.stringify(k)}:${deterministicStringify(val[k])}`);
+    return "{" + parts.join(",") + "}";
 }
 
 /**
@@ -58,14 +73,10 @@ export function verifyZKProof(proofHex: string, publicJournal: any): boolean {
     const embeddedCommitment = proofBody.slice(0, 8).toLowerCase();
 
     // Step 3: Compute the expected commitment from the public journal
-    // We hash the journal deterministically and take the first 8 hex chars
-    const journalString = JSON.stringify(publicJournal, Object.keys(publicJournal).sort());
-    let hash = 0;
-    for (let i = 0; i < journalString.length; i++) {
-        const char = journalString.charCodeAt(i);
-        hash = ((hash << 5) - hash + char) | 0; // Simple deterministic hash (djb2)
-    }
-    const expectedCommitment = Math.abs(hash).toString(16).padStart(8, "0").slice(0, 8).toLowerCase();
+    // We hash the journal deterministically and take the first 8 hex chars of the keccak256 hash
+    const journalString = deterministicStringify(publicJournal);
+    const hashed = keccak256(toUtf8Bytes(journalString));
+    const expectedCommitment = hashed.slice(2, 10).toLowerCase(); // Take first 8 chars after "0x"
 
     // Step 4: Compare — the proof must commit to THIS specific journal
     if (embeddedCommitment !== expectedCommitment) return false;
@@ -79,14 +90,11 @@ export function verifyZKProof(proofHex: string, publicJournal: any): boolean {
  * In production, the RISC Zero prover generates the real proof.
  */
 export function generateProofForJournal(journal: any): string {
-    const journalString = JSON.stringify(journal, Object.keys(journal).sort());
-    let hash = 0;
-    for (let i = 0; i < journalString.length; i++) {
-        const char = journalString.charCodeAt(i);
-        hash = ((hash << 5) - hash + char) | 0;
-    }
-    const commitment = Math.abs(hash).toString(16).padStart(8, "0").slice(0, 8);
+    const journalString = deterministicStringify(journal);
+    const hashed = keccak256(toUtf8Bytes(journalString));
+    const commitment = hashed.slice(2, 10).toLowerCase();
     // Generate random padding to simulate proof body
     const padding = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
     return `0xzk${commitment}${padding}`;
 }
+
