@@ -30,7 +30,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	llmClient := llm.NewAnthropicClient(cfg.AnthropicAPIKey)
+	llmClient := llm.NewGeminiClient(cfg.GeminiAPIKey)
 	apiServer := server.NewAPIServer(cfg.ServerPort, rdb)
 	
 	// Start DLQ Sweeper

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../src/LoreAuditLedger.sol";
+import "./LoreAuditLedger.sol";
 
 contract MockRiscZeroVerifier is IRiscZeroVerifier {
     bool public shouldFail;

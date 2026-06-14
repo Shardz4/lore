@@ -9,9 +9,9 @@ import (
 )
 
 type Config struct {
-	RedisURL         string
-	AnthropicAPIKey  string
-	ServerPort       string
+	RedisURL     string
+	GeminiAPIKey string
+	ServerPort   string
 }
 
 func Load() *Config {
@@ -25,7 +25,7 @@ func Load() *Config {
 	}
 	redisURL = strings.ReplaceAll(redisURL, "$$", "$")
 
-	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+	geminiKey := os.Getenv("GEMINI_API_KEY")
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
@@ -33,8 +33,8 @@ func Load() *Config {
 	}
 
 	return &Config{
-		RedisURL:        redisURL,
-		AnthropicAPIKey: anthropicKey,
-		ServerPort:      serverPort,
+		RedisURL:     redisURL,
+		GeminiAPIKey: geminiKey,
+		ServerPort:   serverPort,
 	}
 }

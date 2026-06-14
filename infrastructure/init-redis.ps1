@@ -4,7 +4,7 @@ Write-Host "Initializing Redis Stream 'lore:stream:raw' and Consumer Group 'scou
 # MKSTREAM creates the stream if it does not already exist
 $password = $env:REDIS_PASSWORD
 if (-not $password) {
-    $password = "arnav_`$1234"
+    $password = "K4zR9wP2xY8tM6qB"
 }
 $password = $password -replace '\$\$', '$'
 docker exec lore_redis redis-cli -a $password XGROUP CREATE lore:stream:raw scout_processors `$ MKSTREAM

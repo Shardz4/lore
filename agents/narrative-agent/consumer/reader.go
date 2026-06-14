@@ -14,11 +14,11 @@ import (
 
 type Reader struct {
 	rdb       *redis.Client
-	llmClient *llm.AnthropicClient
+	llmClient *llm.GeminiClient
 	apiServer *server.APIServer
 }
 
-func NewReader(rdb *redis.Client, llmClient *llm.AnthropicClient, apiServer *server.APIServer) *Reader {
+func NewReader(rdb *redis.Client, llmClient *llm.GeminiClient, apiServer *server.APIServer) *Reader {
 	return &Reader{
 		rdb:       rdb,
 		llmClient: llmClient,
