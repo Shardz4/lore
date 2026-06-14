@@ -16,4 +16,5 @@ type PayloadMetadata struct {
 // TelemetryInfo encapsulates OpenTelemetry trace context.
 type TelemetryInfo struct {
 	TraceID string `json:"trace_id"`
+	AgentID string `json:"agent_id"`
 }

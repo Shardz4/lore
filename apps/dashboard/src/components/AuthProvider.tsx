@@ -30,8 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error signing in with Google", error);
-      // If we are using dummy keys, it will throw an error. We can mock login for demonstration.
-      if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY === undefined) {
+      // If Firebase keys are missing (empty string), fall back to mock login for local dev
+      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
         alert("Firebase keys are missing in .env.local! Falling back to Mock Login.");
         setUser({ uid: "mock_user", displayName: "Mock User", email: "mock@example.com" } as User);
       } else {

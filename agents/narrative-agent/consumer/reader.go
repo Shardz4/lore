@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"lore/narrative-agent/llm"
@@ -42,7 +43,7 @@ func (r *Reader) Start(ctx context.Context) {
 				Consumer: consumer,
 				Streams:  []string{stream, ">"},
 				Count:    10,
-				Block:    5000,
+				Block:    5 * time.Second,
 			}).Result()
 
 			if err != nil {

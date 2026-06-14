@@ -15,7 +15,7 @@ impl Analyzer {
         }
     }
 
-    pub fn process_event(&mut self, event: &str, trace_id: &str) -> Option<InsightBundle> {
+    pub fn process_event(&mut self, event: &str, trace_id: &str, agent_id: &str) -> Option<InsightBundle> {
         if self.events.len() == WINDOW_SIZE {
             self.events.pop_front();
         }
@@ -36,6 +36,7 @@ impl Analyzer {
                 description: "Agent submitted mathematically invalid or hallucinated data. Trust score heavily penalized.".to_string(),
                 event_count: hallucinations,
                 source_trace_id: trace_id.to_string(),
+                agent_id: agent_id.to_string(),
                 timestamp,
             });
         }
@@ -47,6 +48,7 @@ impl Analyzer {
                 description: "High concentration of rage clicks detected in the current window.".to_string(),
                 event_count: rage_clicks,
                 source_trace_id: trace_id.to_string(),
+                agent_id: agent_id.to_string(),
                 timestamp,
             });
         }
@@ -59,6 +61,7 @@ impl Analyzer {
                 description: "Feature drop-offs exceeded 25% of recent events.".to_string(),
                 event_count: drop_offs,
                 source_trace_id: trace_id.to_string(),
+                agent_id: agent_id.to_string(),
                 timestamp,
             });
         }

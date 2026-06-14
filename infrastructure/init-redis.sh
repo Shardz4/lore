@@ -4,7 +4,10 @@
 echo "Initializing Redis Stream 'lore:stream:raw' and Consumer Group 'scout_processors'..."
 
 # MKSTREAM creates the stream if it does not already exist
-docker exec lore_redis redis-cli XGROUP CREATE lore:stream:raw scout_processors $ MKSTREAM
+PASSWORD=${REDIS_PASSWORD:-"arnav_$1234"}
+# Escape double-dollar sign if it was loaded literally from a .env file/env var
+PASSWORD="${PASSWORD//\$\$/\$}"
+docker exec lore_redis redis-cli -a "$PASSWORD" XGROUP CREATE lore:stream:raw scout_processors \$ MKSTREAM
 
 # Check if the command was successful or if the group already exists
 if [ $? -eq 0 ]; then

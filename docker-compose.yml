@@ -6,7 +6,7 @@ services:
     container_name: lore_redis
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-lore_default_secure_pass}"]
     volumes:
       - redis_data:/data
 

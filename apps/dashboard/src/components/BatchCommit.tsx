@@ -1,45 +1,73 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWriteContract, useAccount } from "wagmi";
-import { generateTree, getRoot, Decision } from "@lore/crypto-utils";
+import { generateTree, getRoot, Decision, generateProofForJournal } from "@lore/crypto-utils";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_TOKEN = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
 
 export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
-  const [reputationScore, setReputationScore] = useState<number>(100);
+  const [reputationScore, setReputationScore] = useState<number | null>(null);
+  const [reputationLoading, setReputationLoading] = useState(true);
 
   useEffect(() => {
-    // In production, this fetches from the Go backend's Reputation Module.
-    // For local testing, you can change this in localStorage.
-    const score = parseFloat(localStorage.getItem("agent_reputation") || "100");
-    setReputationScore(score);
-  }, [selectedInsights]);
+    // C2 FIX: Fetch reputation from the server-side Go backend, NOT localStorage.
+    // The server is the single source of truth for reputation scores.
+    if (!address) {
+      setReputationScore(100);
+      setReputationLoading(false);
+      return;
+    }
+    
+    setReputationLoading(true);
+    fetch(`${API_BASE}/api/v1/reputation/${address}`, {
+      headers: {
+        "Authorization": `Bearer ${API_TOKEN}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Reputation API unavailable");
+        return res.json();
+      })
+      .then(data => {
+        setReputationScore(data.score ?? 100);
+      })
+      .catch(() => {
+        // If the reputation API is not yet deployed, default to 100 but log the warning
+        console.warn("[Lore] Reputation API unreachable. Defaulting to 100. Deploy the Go backend to enable server-side enforcement.");
+        setReputationScore(100);
+      })
+      .finally(() => setReputationLoading(false));
+  }, [address]);
 
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;
     setIsPinning(true);
 
     try {
-      // 1. Generate Zero-Knowledge Proof (Simulated for UI)
-      // In production, the agent's ZKVM outputs the proof, and the dashboard submits it.
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      const mockZkProof = `0xzk${Math.random().toString(16).substring(2, 10)}`;
-      const mockJournalCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
-      
-      // 2. Generate Merkle Root of the public output
+      // 1. Build the decisions from the selected insights
       const decisions: Decision[] = selectedInsights.map(item => ({
         insightType: item.insight.insight_type,
         description: item.insight.description,
         traceId: item.insight.source_trace_id,
         timestamp: item.insight.timestamp
       }));
+
+      // 2. Generate ZK-Proof that is cryptographically bound to this specific journal
+      // (Uses the new generateProofForJournal instead of a random string)
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate ZKVM compute time
+      const zkProof = generateProofForJournal(decisions);
+      const journalCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
       
+      // 3. Generate Merkle Root of the public output
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
       
-      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${mockZkProof}\nPublic Journal CID: ${mockJournalCid}\nMerkle Root: ${root}`);
+      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${zkProof}\nPublic Journal CID: ${journalCid}\nMerkle Root: ${root}`);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid: mockJournalCid, zkProof: mockZkProof });
+        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid, zkProof });
       }
       onSuccess();
     } catch (err) {
@@ -65,10 +93,18 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       </div>
       <Button 
         onClick={handleCommit} 
-        disabled={isPinning || !isConnected || reputationScore < 60}
-        className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${reputationScore < 60 ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500 text-white"}`}
+        disabled={isPinning || !isConnected || reputationLoading || (reputationScore !== null && reputationScore < 60)}
+        className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${
+          isPinning 
+            ? "bg-emerald-600/75 text-white cursor-wait"
+            : reputationLoading || !isConnected 
+              ? "bg-slate-400 text-white cursor-not-allowed" 
+              : (reputationScore !== null && reputationScore < 60) 
+                ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" 
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
+        }`}
       >
-        {reputationScore < 60 ? "BANNED: Reputation < 60%" : isPinning ? (
+        {reputationLoading ? "Checking reputation..." : (reputationScore !== null && reputationScore < 60) ? "BANNED: Reputation < 60%" : isPinning ? (
           <span className="flex items-center gap-2">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             Generating ZK-Proof...

@@ -15,7 +15,7 @@ var deterministicEvents = []string{
 var callCount = 0
 
 // GenerateMockPayload generates a deterministic payload for fallback purposes.
-func GenerateMockPayload(traceID string) models.Payload {
+func GenerateMockPayload(traceID string, agentID string) models.Payload {
 	event := deterministicEvents[callCount%len(deterministicEvents)]
 	callCount++
 
@@ -25,6 +25,7 @@ func GenerateMockPayload(traceID string) models.Payload {
 			Timestamp: time.Now().UnixMilli(),
 			Telemetry: models.TelemetryInfo{
 				TraceID: traceID,
+				AgentID: agentID,
 			},
 		},
 		Data: map[string]any{

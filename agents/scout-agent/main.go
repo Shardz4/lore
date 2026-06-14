@@ -49,15 +49,15 @@ func main() {
 	defer ticker.Stop()
 
 	// Run once immediately
-	runCycle(tracer, novusClient, publisher)
+	runCycle(tracer, novusClient, publisher, cfg.AgentID)
 
 	for {
 		<-ticker.C
-		runCycle(tracer, novusClient, publisher)
+		runCycle(tracer, novusClient, publisher, cfg.AgentID)
 	}
 }
 
-func runCycle(tracer trace.Tracer, novusClient *novus.MCPClient, publisher *redis.Publisher) {
+func runCycle(tracer trace.Tracer, novusClient *novus.MCPClient, publisher *redis.Publisher, agentID string) {
 	ctx := context.Background()
 	// Start a root span for this batch processing
 	ctx, span := tracer.Start(ctx, "process_novus_batch")
@@ -67,7 +67,7 @@ func runCycle(tracer trace.Tracer, novusClient *novus.MCPClient, publisher *redi
 	log.Printf("Processing batch with TraceID: %s", traceID)
 
 	// Fetch from Novus MCP or Generator
-	payload, err := novusClient.FetchBehavioralData(ctx, traceID)
+	payload, err := novusClient.FetchBehavioralData(ctx, traceID, agentID)
 	if err != nil {
 		log.Printf("Error fetching data: %v", err)
 		span.RecordError(err)

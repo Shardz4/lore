@@ -35,8 +35,9 @@ pub async fn run(redis_url: &str, tracer: opentelemetry_sdk::trace::Tracer) -> R
                                 if let Ok(s) = std::str::from_utf8(data) {
                                     if let Ok(payload) = serde_json::from_str::<RawPayload>(s) {
                                         let trace_id_str = payload.metadata.telemetry.trace_id;
+                                        let agent_id = payload.metadata.telemetry.agent_id.unwrap_or("agent-001");
                                         
-                                        println!("Processing event: {} with trace: {}", payload.event, trace_id_str);
+                                        println!("Processing event: {} with trace: {} from agent: {}", payload.event, trace_id_str, agent_id);
 
                                         let mut span = tracer.start("analyze_novus_event");
                                         if let Ok(trace_id_otel) = TraceId::from_hex(trace_id_str) {
@@ -45,10 +46,21 @@ pub async fn run(redis_url: &str, tracer: opentelemetry_sdk::trace::Tracer) -> R
                                             span = tracer.start_with_context("analyze_novus_event", &parent_cx);
                                         }
                                         
-                                        if let Some(insight) = analyzer.process_event(payload.event, trace_id_str) {
+                                        if let Some(insight) = analyzer.process_event(payload.event, trace_id_str, agent_id) {
                                             println!("Insight Generated: {:?}", insight);
                                             let insight_json = serde_json::to_string(&insight)?;
-                                            let _: () = pub_con.xadd("lore:stream:insights", "*", &[("payload", insight_json)]).await?;
+                                            let _: () = pub_con.xadd("lore:stream:insights", "*", &[("payload", &insight_json)]).await?;
+                                            
+                                            if insight.insight_type == "REPUTATION_SLASHED" {
+                                                let _: () = pub_con.hincr(format!("lore:reputation:{}", agent_id), "fail_count", 1).await?;
+                                                println!("Updated reputation for agent {}: FailCount +1", agent_id);
+                                            } else {
+                                                let _: () = pub_con.hincr(format!("lore:reputation:{}", agent_id), "success_count", 1).await?;
+                                                println!("Updated reputation for agent {}: SuccessCount +1 (Anomaly Detected)", agent_id);
+                                            }
+                                        } else {
+                                            let _: () = pub_con.hincr(format!("lore:reputation:{}", agent_id), "success_count", 1).await?;
+                                            println!("Updated reputation for agent {}: SuccessCount +1", agent_id);
                                         }
 
                                         span.end();

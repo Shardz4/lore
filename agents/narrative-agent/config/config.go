@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,7 @@ func Load() *Config {
 	if redisURL == "" {
 		redisURL = "redis://localhost:6379"
 	}
+	redisURL = strings.ReplaceAll(redisURL, "$$", "$")
 
 	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
 

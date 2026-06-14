@@ -3,6 +3,8 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"lore/scout-agent/models"
@@ -14,8 +16,14 @@ type Publisher struct {
 }
 
 func NewPublisher(addr, stream string) *Publisher {
+	password := os.Getenv("REDIS_PASSWORD")
+	if password == "" {
+		password = "lore_default_secure_pass"
+	}
+	password = strings.ReplaceAll(password, "$$", "$")
 	rdb := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr:     addr,
+		Password: password,
 	})
 	return &Publisher{
 		client: rdb,
