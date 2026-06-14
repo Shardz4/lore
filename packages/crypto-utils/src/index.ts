@@ -9,6 +9,20 @@ export interface Decision {
 }
 
 /**
+ * Recursively stringifies any JS value, sorting object keys to guarantee deterministic output.
+ */
+export function deterministicStringify(val: any): string {
+    if (val === null) return "null";
+    if (typeof val !== "object") return JSON.stringify(val);
+    if (Array.isArray(val)) {
+        return "[" + val.map(deterministicStringify).join(",") + "]";
+    }
+    const keys = Object.keys(val).sort();
+    const parts = keys.map(k => `${JSON.stringify(k)}:${deterministicStringify(val[k])}`);
+    return "{" + parts.join(",") + "}";
+}
+
+/**
  * Generates a Merkle Tree from an array of product decisions.
  * Uses keccak256 under the hood.
  */
@@ -60,7 +74,7 @@ export function verifyZKProof(proofHex: string, publicJournal: any): boolean {
 
     // Step 3: Compute the expected commitment from the public journal
     // We hash the journal deterministically and take the first 8 hex chars of the keccak256 hash
-    const journalString = JSON.stringify(publicJournal, Object.keys(publicJournal).sort());
+    const journalString = deterministicStringify(publicJournal);
     const hashed = keccak256(toUtf8Bytes(journalString));
     const expectedCommitment = hashed.slice(2, 10).toLowerCase(); // Take first 8 chars after "0x"
 
@@ -76,7 +90,7 @@ export function verifyZKProof(proofHex: string, publicJournal: any): boolean {
  * In production, the RISC Zero prover generates the real proof.
  */
 export function generateProofForJournal(journal: any): string {
-    const journalString = JSON.stringify(journal, Object.keys(journal).sort());
+    const journalString = deterministicStringify(journal);
     const hashed = keccak256(toUtf8Bytes(journalString));
     const commitment = hashed.slice(2, 10).toLowerCase();
     // Generate random padding to simulate proof body
