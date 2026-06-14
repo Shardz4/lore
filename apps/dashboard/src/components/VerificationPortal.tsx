@@ -80,10 +80,10 @@ export function VerificationPortal() {
       {result !== null && (
         <div className={`mt-8 p-6 rounded-2xl text-center border shadow-sm ${result ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
           <div className="font-sans font-black tracking-tight text-xl mb-1">
-            {result ? "SYSTEM VALIDATED" : "INTEGRITY BREACH"}
+            {result ? "✅ Proof Verified" : "❌ Verification Failed"}
           </div>
           <p className="text-sm font-medium opacity-80">
-            {result ? "Zero-Knowledge Proof verified mathematically and traces to the on-chain root." : "Proof is invalid or does not match the public journal."}
+            {result ? "The proof is valid — the data matches the on-chain Merkle root and hasn't been tampered with." : "The proof doesn't match. The data may have been altered, or the wrong proof was provided."}
           </p>
         </div>
       )}

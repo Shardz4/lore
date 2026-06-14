@@ -7,6 +7,7 @@ import { useAccount, useConnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { Button } from "@/components/ui/button";
 import { VerificationPortal } from "@/components/VerificationPortal";
+import { OnboardingCards } from "@/components/OnboardingCards";
 import { Activity, ShieldCheck, Server, Wallet, LogOut } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -83,21 +84,21 @@ export default function Dashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'feed' ? 'bg-white border border-slate-200 shadow-sm text-emerald-600' : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'}`}
           >
             <Activity className="w-5 h-5" />
-            <span className="font-medium">Live Feed</span>
+            <span className="font-medium">Insights Feed</span>
           </button>
           <button 
             onClick={() => setActiveTab("verify")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'verify' ? 'bg-white border border-slate-200 shadow-sm text-emerald-600' : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'}`}
           >
             <ShieldCheck className="w-5 h-5" />
-            <span className="font-medium">Audit Portal</span>
+            <span className="font-medium">Proof Verifier</span>
           </button>
           <button 
             onClick={() => setActiveTab("agents")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'agents' ? 'bg-white border border-slate-200 shadow-sm text-emerald-600' : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'}`}
           >
             <Server className="w-5 h-5" />
-            <span className="font-medium">Agent Pipeline</span>
+            <span className="font-medium">Agent Status</span>
           </button>
         </nav>
 
@@ -134,9 +135,9 @@ export default function Dashboard() {
         {/* Header Grid */}
         <header className="h-20 border-b border-slate-100 bg-white/80 backdrop-blur-md flex items-center px-10 z-10">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-            {activeTab === "feed" && "Live Action Feed"}
-            {activeTab === "verify" && "Cryptographic Portal"}
-            {activeTab === "agents" && "Agent Pipeline Overview"}
+            {activeTab === "feed" && "Insights Feed"}
+            {activeTab === "verify" && "Proof Verifier"}
+            {activeTab === "agents" && "Agent Status"}
           </h2>
         </header>
 
@@ -155,13 +156,13 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center h-40">
                   <div className="animate-pulse flex flex-col items-center gap-4">
                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-emerald-600 font-medium">Intercepting AI signals...</p>
+                    <p className="text-emerald-600 font-medium">Loading insights from your agents...</p>
                   </div>
                 </div>
               )}
               {data?.insights?.length === 0 && (
                 <div className="text-center p-12 border border-dashed border-slate-200 rounded-2xl bg-slate-50">
-                  <p className="text-slate-500">No anomalies detected in the current stream.</p>
+                  <p className="text-slate-500">No insights yet. Make sure your agents are running to start generating data.</p>
                 </div>
               )}
             </div>
@@ -169,8 +170,8 @@ export default function Dashboard() {
 
           {activeTab === "verify" && (
             <div className="max-w-4xl mx-auto p-10 bg-white border border-slate-200 rounded-3xl shadow-xl">
-               <h2 className="text-2xl font-bold mb-2 text-slate-900">Zero-Trust Verification</h2>
-               <p className="text-slate-500 mb-8">Paste your IPFS CID and on-chain Merkle Root to mathematically verify the AI trace.</p>
+               <h2 className="text-2xl font-bold mb-2 text-slate-900">Verify a Proof</h2>
+               <p className="text-slate-500 mb-8">Paste the proof data and on-chain Merkle root from a previous commit to verify that the AI-generated insight hasn't been tampered with.</p>
                <VerificationPortal />
             </div>
           )}
@@ -178,13 +179,14 @@ export default function Dashboard() {
           {activeTab === "agents" && (
              <div className="max-w-4xl mx-auto text-center p-16 border border-slate-200 rounded-3xl bg-slate-50">
                <Server className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-               <p className="text-slate-500 text-lg">Agent telemetry metrics offline. (Pipeline UI placeholder)</p>
+               <p className="text-slate-500 text-lg">Agent monitoring dashboard coming soon. Your backend agents (Scout, Analyst, Narrative) are processing data in the background.</p>
              </div>
           )}
         </div>
 
         {/* Floating Action Bar */}
         {activeTab === "feed" && <BatchCommit selectedInsights={selectedInsights} onSuccess={() => setSelectedIds(new Set())} />}
+        <OnboardingCards />
       </main>
     </div>
   );
