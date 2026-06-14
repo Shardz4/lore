@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
     container_name: lore_redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-lore_default_secure_pass}"]
     volumes:
       - redis_data:/data
@@ -16,11 +14,11 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686"   # Jaeger UI
-      - "4317:4317"     # OTLP gRPC receiver
-      - "4318:4318"     # OTLP HTTP receiver
-      - "6831:6831/udp" # Jaeger Thrift Compact (UDP)
-      - "14268:14268"   # Jaeger Thrift HTTP
+      - "127.0.0.1:16686:16686"   # Jaeger UI
+      - "127.0.0.1:4317:4317"     # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318"     # OTLP HTTP receiver
+      - "127.0.0.1:6831:6831/udp" # Jaeger Thrift Compact (UDP)
+      - "127.0.0.1:14268:14268"   # Jaeger Thrift HTTP
 
 volumes:
   redis_data:

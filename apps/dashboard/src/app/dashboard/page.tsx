@@ -37,18 +37,37 @@ export default function Dashboard() {
   }, [user, loading, router]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-  const API_TOKEN = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
+  const [apiToken, setApiToken] = useState<string>("");
 
   useEffect(() => {
+    async function fetchToken() {
+      if (user) {
+        if (user.uid === "mock_user") {
+          setApiToken(process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token");
+        } else {
+          try {
+            const token = await user.getIdToken();
+            setApiToken(token);
+          } catch (e) {
+            console.error("Error getting Firebase ID token:", e);
+          }
+        }
+      }
+    }
+    fetchToken();
+  }, [user]);
+
+  useEffect(() => {
+    if (!apiToken) return;
     fetch(`${API_BASE}/api/v2/insights`, {
       headers: {
-        "Authorization": `Bearer ${API_TOKEN}`,
+        "Authorization": `Bearer ${apiToken}`,
       },
     })
       .then(res => res.json())
       .then(setData)
       .catch(console.error);
-  }, [API_BASE, API_TOKEN]);
+  }, [API_BASE, apiToken]);
 
   const toggleSelect = (id: string, checked: boolean) => {
     const next = new Set(selectedIds);

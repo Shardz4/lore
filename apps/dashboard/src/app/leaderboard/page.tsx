@@ -1,7 +1,7 @@
 "use client";
 
-
 import { useState, useEffect } from "react";
+import { useAuth } from "../../components/AuthProvider";
 
 type Agent = {
   id: string;
@@ -14,17 +14,58 @@ type Agent = {
 
 export default function Leaderboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Mock fetching from the Go backend's Reputation module
-    const mockAgents: Agent[] = [
-      { id: "agent-001", name: "Alpha Protocol", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
-      { id: "agent-002", name: "Beta Node", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
-      { id: "agent-003", name: "Rogue Vector", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
-      { id: "agent-004", name: "Omega Core", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
-    ];
-    setAgents(mockAgents.sort((a, b) => b.score - a.score));
-  }, []);
+    if (loading) return;
+
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+    async function fetchLeaderboard() {
+      let token = process.env.NEXT_PUBLIC_API_BEARER_TOKEN || "lore_default_secret_api_token";
+      if (user && user.uid !== "mock_user") {
+        try {
+          token = await user.getIdToken();
+        } catch (e) {
+          console.error("Error getting ID token:", e);
+        }
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/leaderboard`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error("Failed to fetch leaderboard");
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          setAgents(data.sort((a: any, b: any) => b.score - a.score));
+        } else {
+          // Fallback mock data
+          const mockAgents: Agent[] = [
+            { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
+            { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
+            { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
+            { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
+          ];
+          setAgents(mockAgents.sort((a, b) => b.score - a.score));
+        }
+      } catch (err) {
+        console.warn("Leaderboard API unreachable, using fallback mock data:", err);
+        const mockAgents: Agent[] = [
+          { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
+          { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
+          { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
+          { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
+        ];
+        setAgents(mockAgents.sort((a, b) => b.score - a.score));
+      }
+    }
+
+    fetchLeaderboard();
+  }, [user, loading]);
 
   return (
     <div className="min-h-screen bg-[#030303] text-white font-sans selection:bg-emerald-500/30">
