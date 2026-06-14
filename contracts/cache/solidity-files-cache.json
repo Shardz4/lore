@@ -1,0 +1,80 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\CREWMOBILE\\Desktop\\lore\\contracts\\src\\LoreAuditLedger.sol": {
+      "lastModificationDate": 1781274680888,
+      "contentHash": "fbd7171d8d1a401abff0d17ea4422c65",
+      "sourceName": "src/LoreAuditLedger.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IRiscZeroVerifier",
+        "LoreZKVerifierLedger"
+      ]
+    },
+    "C:\\Users\\CREWMOBILE\\Desktop\\lore\\contracts\\src\\MockRiscZeroVerifier.sol": {
+      "lastModificationDate": 1781430352880,
+      "contentHash": "9eb1ab34183b4ae6b94c523f7c4a966d",
+      "sourceName": "src/MockRiscZeroVerifier.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./LoreAuditLedger.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MockRiscZeroVerifier"
+      ]
+    }
+  }
+}

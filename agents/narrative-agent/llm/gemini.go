@@ -11,41 +11,46 @@ import (
 	"lore/narrative-agent/models"
 )
 
-type AnthropicClient struct {
+type GeminiClient struct {
 	apiKey string
 	client *http.Client
 }
 
-func NewAnthropicClient(apiKey string) *AnthropicClient {
-	return &AnthropicClient{
+func NewGeminiClient(apiKey string) *GeminiClient {
+	return &GeminiClient{
 		apiKey: apiKey,
 		client: &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
-func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, bool, error) {
-	switch c.apiKey {
-	case "":
-		return "Mock Narrative: Actionable PM summary would appear here if ANTHROPIC_API_KEY was provided.", true, nil
+func (c *GeminiClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, bool, error) {
+	if c.apiKey == "" {
+		return "Mock Narrative: Actionable PM summary would appear here if GEMINI_API_KEY was provided.", true, nil
 	}
 
 	prompt := fmt.Sprintf("Act as an expert Product Manager. We detected a %s anomaly. Description: %s. Event count: %d. Provide a concise, actionable summary of what to investigate.", insight.InsightType, insight.Description, insight.EventCount)
 
+	// Gemini generateContent structure
 	payload := map[string]interface{}{
-		"model":      "claude-3-5-sonnet-20240620",
-		"max_tokens": 256,
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]interface{}{
+					{"text": prompt},
+				},
+			},
 		},
 	}
 
 	reqBody, _ := json.Marshal(payload)
 
 	var lastErr error
+	apiURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=%s", c.apiKey)
+
 	for attempt := 1; attempt <= 3; attempt++ {
-		req, _ := http.NewRequestWithContext(ctx, "POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(reqBody))
-		req.Header.Set("x-api-key", c.apiKey)
-		req.Header.Set("anthropic-version", "2023-06-01")
+		req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewBuffer(reqBody))
+		if err != nil {
+			return "", false, err
+		}
 		req.Header.Set("content-type", "application/json")
 
 		resp, err := c.client.Do(req)
@@ -66,25 +71,30 @@ func (c *AnthropicClient) GenerateSummary(ctx context.Context, insight models.In
 			var errResp map[string]any
 			json.NewDecoder(resp.Body).Decode(&errResp)
 			resp.Body.Close()
-			return "", false, fmt.Errorf("anthropic API error: %d, %v", resp.StatusCode, errResp)
+			return "", false, fmt.Errorf("gemini API error: %d, %v", resp.StatusCode, errResp)
 		}
 
-		var result struct {
-			Content []struct {
-				Text string `json:"text"`
-			} `json:"content"`
+		type GeminiResponse struct {
+			Candidates []struct {
+				Content struct {
+					Parts []struct {
+						Text string `json:"text"`
+					} `json:"parts"`
+				} `json:"content"`
+			} `json:"candidates"`
 		}
 
+		var result GeminiResponse
 		err = json.NewDecoder(resp.Body).Decode(&result)
 		resp.Body.Close()
 		if err != nil {
 			return "", false, fmt.Errorf("failed to decode response: %w", err)
 		}
 
-		if len(result.Content) > 0 {
-			return result.Content[0].Text, false, nil
+		if len(result.Candidates) > 0 && len(result.Candidates[0].Content.Parts) > 0 {
+			return result.Candidates[0].Content.Parts[0].Text, false, nil
 		}
-		return "", false, fmt.Errorf("empty response from Claude")
+		return "", false, fmt.Errorf("empty response from Gemini")
 	}
 
 	return "", false, fmt.Errorf("failed after 3 retries: %w", lastErr)

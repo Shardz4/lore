@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/LoreAuditLedger.sol";
-import "./MockRiscZeroVerifier.sol";
+import "../src/MockRiscZeroVerifier.sol";
 
 contract LoreZKVerifierLedgerTest is Test {
     LoreZKVerifierLedger public ledger;

@@ -66,6 +66,12 @@ export function OnboardingCards() {
   const handleDismiss = () => {
     setIsDismissed(true);
     localStorage.setItem(STORAGE_KEY, "true");
+    if (typeof window !== "undefined" && (window as any).pendo) {
+      (window as any).pendo.track("Onboarding Guide Dismissed", {
+        completedAllCards: currentIndex === CARDS.length - 1,
+        dismissedAtCard: currentIndex,
+      });
+    }
   };
 
   const goTo = (index: number) => {
