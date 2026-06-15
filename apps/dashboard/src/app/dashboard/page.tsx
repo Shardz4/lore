@@ -21,6 +21,11 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"feed" | "verify" | "agents">("feed");
   const [agents, setAgents] = useState<any[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
+  const [backendOnline, setBackendOnline] = useState<boolean>(false);
+  const [lastCommit, setLastCommit] = useState<{ proof: string, root: string, journal: string } | null>(null);
+  const [verifierPayload, setVerifierPayload] = useState("");
+  const [verifierProof, setVerifierProof] = useState("");
+  const [verifierRoot, setVerifierRoot] = useState("");
   const { isConnected, address } = useAccount();
   const { connect } = useConnect({
     mutation: {
@@ -66,9 +71,18 @@ export default function Dashboard() {
         "Authorization": `Bearer ${apiToken}`,
       },
     })
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error);
+      .then(res => {
+        if (!res.ok) throw new Error("API unreachable");
+        return res.json();
+      })
+      .then(resData => {
+        setData(resData);
+        setBackendOnline(true);
+      })
+      .catch(err => {
+        console.error("Error fetching insights:", err);
+        setBackendOnline(false);
+      });
   }, [API_BASE, apiToken]);
 
   useEffect(() => {
@@ -80,8 +94,12 @@ export default function Dashboard() {
         "Authorization": `Bearer ${apiToken}`,
       },
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("API unreachable");
+        return res.json();
+      })
       .then(data => {
+        setBackendOnline(true);
         if (data && data.length > 0) {
           setAgents(data.sort((a: any, b: any) => b.score - a.score));
         } else {
@@ -97,6 +115,7 @@ export default function Dashboard() {
       })
       .catch(err => {
         console.warn("Leaderboard API unreachable, using fallback mock data:", err);
+        setBackendOnline(false);
         const mockAgents = [
           { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
           { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
@@ -116,6 +135,9 @@ export default function Dashboard() {
   };
 
   const selectedInsights = data?.insights?.filter((i: any) => selectedIds.has(i.insight.source_trace_id)) || [];
+
+  const isNarrativeMock = data?.insights?.length > 0 ? data.insights.every((i: any) => i.is_mock) : true;
+  const narrativeModelLabel = isNarrativeMock ? "Claude 3.5 Sonnet" : "Gemini";
 
   if (loading || !user) {
     return (
@@ -230,7 +252,12 @@ export default function Dashboard() {
             <div className="max-w-4xl mx-auto p-10 bg-white border border-slate-200 rounded-3xl shadow-xl">
                <h2 className="text-2xl font-bold mb-2 text-slate-900">Verify a Proof</h2>
                <p className="text-slate-500 mb-8">Paste the proof data and on-chain Merkle root from a previous commit to verify that the AI-generated insight hasn't been tampered with.</p>
-               <VerificationPortal />
+               <VerificationPortal 
+                 key={`${verifierPayload}-${verifierProof}-${verifierRoot}`}
+                 initialPayload={verifierPayload}
+                 initialProof={verifierProof}
+                 initialRoot={verifierRoot}
+               />
             </div>
           )}
 
@@ -268,30 +295,48 @@ export default function Dashboard() {
                {/* Pipeline Status Overview */}
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                   <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100">
-                     <Cpu className="w-5 h-5 text-emerald-600 animate-pulse" />
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                     backendOnline 
+                       ? "bg-emerald-50 border-emerald-100" 
+                       : "bg-slate-50 border-slate-200"
+                   }`}>
+                     <Cpu className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
                    </div>
                    <div className="text-left">
                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Scout Ingestor</p>
-                     <p className="text-sm font-semibold text-emerald-600">Active & Polling</p>
+                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                       {backendOnline ? "Active & Polling" : "Status unknown"}
+                     </p>
                    </div>
                  </div>
                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                   <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100">
-                     <ShieldCheck className="w-5 h-5 text-emerald-600 animate-pulse" />
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                     backendOnline 
+                       ? "bg-emerald-50 border-emerald-100" 
+                       : "bg-slate-50 border-slate-200"
+                   }`}>
+                     <ShieldCheck className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
                    </div>
                    <div className="text-left">
                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Analyst ZKVM</p>
-                     <p className="text-sm font-semibold text-emerald-600">Active & Proving</p>
+                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                       {backendOnline ? "Active & Proving" : "Status unknown"}
+                     </p>
                    </div>
                  </div>
                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                   <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100">
-                     <Activity className="w-5 h-5 text-emerald-600 animate-pulse" />
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                     backendOnline 
+                       ? "bg-emerald-50 border-emerald-100" 
+                       : "bg-red-50 border-red-200"
+                   }`}>
+                     <Activity className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-red-500'}`} />
                    </div>
                    <div className="text-left">
-                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Narrative (Gemini)</p>
-                     <p className="text-sm font-semibold text-emerald-600">Active & Synthesizing</p>
+                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Narrative ({narrativeModelLabel})</p>
+                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-red-600'}`}>
+                       {backendOnline ? "Active & Synthesizing" : "Offline"}
+                     </p>
                    </div>
                  </div>
                </div>
@@ -366,8 +411,130 @@ export default function Dashboard() {
         </div>
 
         {/* Floating Action Bar */}
-        {activeTab === "feed" && <BatchCommit selectedInsights={selectedInsights} onSuccess={() => setSelectedIds(new Set())} />}
+        {activeTab === "feed" && (
+          <BatchCommit 
+            selectedInsights={selectedInsights} 
+            onSuccess={(details) => {
+              setLastCommit(details);
+              setSelectedIds(new Set());
+            }} 
+          />
+        )}
         <OnboardingCards />
+
+        {/* Success / Copy Modal */}
+        {lastCommit && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start">
+                <div className="text-left">
+                  <h3 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    ZKVM Batch Committed
+                  </h3>
+                  <p className="text-slate-500 text-sm mt-1">Your cryptographic batch proof has been generated. Use the details below to verify the integrity on-chain.</p>
+                </div>
+                <button 
+                  onClick={() => setLastCommit(null)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors text-lg font-bold p-1 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Public Journal JSON */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Public Journal (JSON)</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.journal);
+                        alert("Copied Public Journal to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <textarea 
+                    readOnly 
+                    className="w-full p-4 border border-slate-200 rounded-2xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none resize-none" 
+                    rows={5}
+                    value={lastCommit.journal}
+                  />
+                </div>
+
+                {/* ZK Proof */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ZK-SNARK Proof (Hex)</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.proof);
+                        alert("Copied ZK Proof to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none" 
+                    value={lastCommit.proof}
+                  />
+                </div>
+
+                {/* Merkle Root */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Merkle Root</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.root);
+                        alert("Copied Merkle Root to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none" 
+                    value={lastCommit.root}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-2">
+                <Button 
+                  onClick={() => {
+                    setVerifierPayload(lastCommit.journal);
+                    setVerifierProof(lastCommit.proof);
+                    setVerifierRoot(lastCommit.root);
+                    setActiveTab("verify");
+                    setLastCommit(null);
+                  }}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-6 font-bold shadow-md transition-all border-none"
+                >
+                  Auto-Fill & Go to Verifier
+                </Button>
+                <Button 
+                  onClick={() => setLastCommit(null)}
+                  variant="outline"
+                  className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl py-6 px-6 font-bold"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

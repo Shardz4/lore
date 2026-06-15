@@ -6,7 +6,7 @@ import { useAuth } from "./AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
+export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: (details: { proof: string, root: string, journal: string }) => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
   const [reputationScore, setReputationScore] = useState<number | null>(null);
@@ -93,11 +93,14 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       console.log("Merkle Root:", root);
       console.log("=================================");
 
-      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${zkProof}\nMerkle Root: ${root}\n\n👉 The Public Journal JSON has been logged to your browser's developer console. Press F12 to open the console and copy the JSON!`);
       if (typeof window !== "undefined" && (window as any).pendo) {
         (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid, zkProof });
       }
-      onSuccess();
+      onSuccess({
+        proof: zkProof,
+        root: root,
+        journal: JSON.stringify(decisions, null, 2)
+      });
     } catch (err) {
       console.error(err);
       alert("Commit failed.");
