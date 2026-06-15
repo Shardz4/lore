@@ -3,12 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { generateTree, getRoot, Decision, verifyZKProof } from "@lore/crypto-utils";
 
-export function VerificationPortal() {
-  const [payload, setPayload] = useState("");
-  const [root, setRoot] = useState("");
+export function VerificationPortal({ 
+  initialPayload = "", 
+  initialProof = "", 
+  initialRoot = "" 
+}: { 
+  initialPayload?: string, 
+  initialProof?: string, 
+  initialRoot?: string 
+}) {
+  const [payload, setPayload] = useState(initialPayload);
+  const [root, setRoot] = useState(initialRoot);
   const [result, setResult] = useState<boolean | null>(null);
 
-  const [proof, setProof] = useState("");
+  const [proof, setProof] = useState(initialProof);
 
   const handleVerify = () => {
     if (!payload || !proof || !root) {

@@ -8,7 +8,7 @@ import { injected } from "wagmi/connectors";
 import { Button } from "@/components/ui/button";
 import { VerificationPortal } from "@/components/VerificationPortal";
 import { OnboardingCards } from "@/components/OnboardingCards";
-import { Activity, ShieldCheck, Server, Wallet, LogOut } from "lucide-react";
+import { Activity, ShieldCheck, Server, Wallet, LogOut, Cpu, CheckCircle2, AlertTriangle, XCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +19,13 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"feed" | "verify" | "agents">("feed");
+  const [agents, setAgents] = useState<any[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [backendOnline, setBackendOnline] = useState<boolean>(false);
+  const [lastCommit, setLastCommit] = useState<{ proof: string, root: string, journal: string } | null>(null);
+  const [verifierPayload, setVerifierPayload] = useState("");
+  const [verifierProof, setVerifierProof] = useState("");
+  const [verifierRoot, setVerifierRoot] = useState("");
   const { isConnected, address } = useAccount();
   const { connect } = useConnect({
     mutation: {
@@ -64,10 +71,48 @@ export default function Dashboard() {
         "Authorization": `Bearer ${apiToken}`,
       },
     })
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error);
+      .then(res => {
+        if (!res.ok) throw new Error("API unreachable");
+        return res.json();
+      })
+      .then(resData => {
+        setData(resData);
+        setBackendOnline(true);
+      })
+      .catch(err => {
+        console.error("Error fetching insights:", err);
+        setBackendOnline(false);
+      });
   }, [API_BASE, apiToken]);
+
+  useEffect(() => {
+    if (!apiToken || activeTab !== "agents") return;
+    
+    setAgentsLoading(true);
+    fetch(`${API_BASE}/api/v1/leaderboard`, {
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("API unreachable");
+        return res.json();
+      })
+      .then(data => {
+        setBackendOnline(true);
+        if (data && data.length > 0) {
+          setAgents(data.sort((a: any, b: any) => b.score - a.score));
+        } else {
+          setAgents([]);
+        }
+      })
+      .catch(err => {
+        console.warn("Leaderboard API unreachable:", err);
+        setBackendOnline(false);
+        setAgents([]);
+      })
+      .finally(() => setAgentsLoading(false));
+  }, [API_BASE, apiToken, activeTab]);
 
   const toggleSelect = (id: string, checked: boolean) => {
     const next = new Set(selectedIds);
@@ -191,21 +236,291 @@ export default function Dashboard() {
             <div className="max-w-4xl mx-auto p-10 bg-white border border-slate-200 rounded-3xl shadow-xl">
                <h2 className="text-2xl font-bold mb-2 text-slate-900">Verify a Proof</h2>
                <p className="text-slate-500 mb-8">Paste the proof data and on-chain Merkle root from a previous commit to verify that the AI-generated insight hasn't been tampered with.</p>
-               <VerificationPortal />
+               <VerificationPortal 
+                 key={`${verifierPayload}-${verifierProof}-${verifierRoot}`}
+                 initialPayload={verifierPayload}
+                 initialProof={verifierProof}
+                 initialRoot={verifierRoot}
+               />
             </div>
           )}
 
           {activeTab === "agents" && (
-             <div className="max-w-4xl mx-auto text-center p-16 border border-slate-200 rounded-3xl bg-slate-50">
-               <Server className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-               <p className="text-slate-500 text-lg">Agent monitoring dashboard coming soon. Your backend agents (Scout, Analyst, Narrative) are processing data in the background.</p>
+             <div className="max-w-4xl mx-auto space-y-8">
+               {/* Header Card */}
+               <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 flex justify-between items-center shadow-sm">
+                 <div className="text-left">
+                   <h3 className="text-xl font-bold text-slate-900 mb-1">Global Trust Leaderboard</h3>
+                   <p className="text-slate-500 text-sm">Real-time mathematical evaluation of active agent reliability. Agents falling below 60% are automatically locked and banned.</p>
+                 </div>
+                 <Button 
+                   onClick={() => {
+                     setAgentsLoading(true);
+                     fetch(`${API_BASE}/api/v1/leaderboard`, {
+                       headers: {
+                         "Authorization": `Bearer ${apiToken}`,
+                       },
+                     })
+                       .then(res => res.json())
+                       .then(data => {
+                         if (data && data.length > 0) setAgents(data.sort((a: any, b: any) => b.score - a.score));
+                       })
+                       .catch(console.error)
+                       .finally(() => setAgentsLoading(false));
+                   }}
+                   variant="outline"
+                   className="flex items-center gap-2 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                 >
+                   <RefreshCw className={`w-4 h-4 ${agentsLoading ? 'animate-spin' : ''}`} />
+                   Sync Status
+                 </Button>
+               </div>
+
+               {/* Pipeline Status Overview */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                     backendOnline 
+                       ? "bg-emerald-50 border-emerald-100" 
+                       : "bg-slate-50 border-slate-200"
+                   }`}>
+                     <Cpu className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
+                   </div>
+                   <div className="text-left">
+                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Scout Ingestor</p>
+                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                       {backendOnline ? "Active & Polling" : "Status unknown"}
+                     </p>
+                   </div>
+                 </div>
+                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                     backendOnline 
+                       ? "bg-emerald-50 border-emerald-100" 
+                       : "bg-slate-50 border-slate-200"
+                   }`}>
+                     <ShieldCheck className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
+                   </div>
+                   <div className="text-left">
+                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Analyst ZKVM</p>
+                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                       {backendOnline ? "Active & Proving" : "Status unknown"}
+                     </p>
+                   </div>
+                 </div>
+                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                      backendOnline 
+                        ? "bg-emerald-50 border-emerald-100" 
+                        : "bg-slate-50 border-slate-200"
+                    }`}>
+                      <Activity className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Narrative Agent</p>
+                      <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                        {backendOnline ? "Active & Synthesizing" : "Status unknown"}
+                      </p>
+                    </div>
+                  </div>
+               </div>
+
+               {/* Agent Table */}
+               <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                 {agentsLoading ? (
+                   <div className="text-center p-12">
+                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                     <p className="text-slate-500 font-medium">Syncing agent reputation indexes...</p>
+                   </div>
+                 ) : (
+                   <table className="w-full text-left border-collapse">
+                     <thead>
+                       <tr className="border-b border-slate-100 bg-slate-50">
+                         <th className="p-5 text-xs font-bold tracking-wider text-slate-500 uppercase">Agent ID</th>
+                         <th className="p-5 text-xs font-bold tracking-wider text-slate-500 uppercase">Telemetry Verification</th>
+                         <th className="p-5 text-xs font-bold tracking-wider text-slate-500 uppercase">Trust Score</th>
+                         <th className="p-5 text-xs font-bold tracking-wider text-slate-500 uppercase text-right">System Status</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-100">
+                       {agents.map((agent) => (
+                         <tr key={agent.id} className={`transition-colors hover:bg-slate-50/50 ${agent.status === "SLASHED" ? "bg-red-50/10" : ""}`}>
+                           <td className="p-5 text-left">
+                             <div className="font-bold text-slate-900">{agent.name}</div>
+                             <div className="text-xs text-slate-400 font-mono mt-1">{agent.id}</div>
+                           </td>
+                           <td className="p-5 text-left">
+                             <div className="flex items-center gap-3 text-sm font-semibold">
+                               <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">{agent.successCount} ✓</span>
+                               <span className="text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{agent.failCount} ✗</span>
+                             </div>
+                           </td>
+                           <td className="p-5 text-left">
+                             <div className="font-mono text-xl font-bold text-slate-900">
+                               {agent.score.toFixed(1)}%
+                             </div>
+                           </td>
+                           <td className="p-5 text-right">
+                             {agent.status === "TRUSTED" && (
+                               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                 <CheckCircle2 className="w-3.5 h-3.5" /> Trusted Partner
+                               </span>
+                             )}
+                             {agent.status === "WARNING" && (
+                               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 border border-amber-500/20">
+                                 <AlertTriangle className="w-3.5 h-3.5" /> At Risk
+                               </span>
+                             )}
+                             {agent.status === "SLASHED" && (
+                               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-500/10 text-red-700 border border-red-500/20">
+                                 <XCircle className="w-3.5 h-3.5" /> Slashed / Banned
+                               </span>
+                             )}
+                           </td>
+                         </tr>
+                       ))}
+                       {agents.length === 0 && (
+                         <tr>
+                           <td colSpan={4} className="text-center p-12 text-slate-500">
+                             {backendOnline 
+                               ? "No agent records found. Ensure telemetry is processed to index active agent systems."
+                               : "Backend offline — agent data unavailable. Please ensure the Narrative Agent is running."}
+                           </td>
+                         </tr>
+                       )}
+                     </tbody>
+                   </table>
+                 )}
+               </div>
              </div>
           )}
         </div>
 
         {/* Floating Action Bar */}
-        {activeTab === "feed" && <BatchCommit selectedInsights={selectedInsights} onSuccess={() => setSelectedIds(new Set())} />}
+        {activeTab === "feed" && (
+          <BatchCommit 
+            selectedInsights={selectedInsights} 
+            onSuccess={(details) => {
+              setLastCommit(details);
+              setSelectedIds(new Set());
+            }} 
+          />
+        )}
         <OnboardingCards />
+
+        {/* Success / Copy Modal */}
+        {lastCommit && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start">
+                <div className="text-left">
+                  <h3 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    ZKVM Batch Committed
+                  </h3>
+                  <p className="text-slate-500 text-sm mt-1">Your cryptographic batch proof has been generated. Use the details below to verify the integrity on-chain.</p>
+                </div>
+                <button 
+                  onClick={() => setLastCommit(null)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors text-lg font-bold p-1 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Public Journal JSON */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Public Journal (JSON)</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.journal);
+                        alert("Copied Public Journal to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <textarea 
+                    readOnly 
+                    className="w-full p-4 border border-slate-200 rounded-2xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none resize-none" 
+                    rows={5}
+                    value={lastCommit.journal}
+                  />
+                </div>
+
+                {/* ZK Proof */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ZK-SNARK Proof (Hex)</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.proof);
+                        alert("Copied ZK Proof to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none" 
+                    value={lastCommit.proof}
+                  />
+                </div>
+
+                {/* Merkle Root */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Merkle Root</label>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastCommit.root);
+                        alert("Copied Merkle Root to clipboard!");
+                      }}
+                      className="text-xs text-emerald-600 hover:text-emerald-500 font-bold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl font-mono text-xs bg-slate-50 text-slate-600 select-all focus:outline-none" 
+                    value={lastCommit.root}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-2">
+                <Button 
+                  onClick={() => {
+                    setVerifierPayload(lastCommit.journal);
+                    setVerifierProof(lastCommit.proof);
+                    setVerifierRoot(lastCommit.root);
+                    setActiveTab("verify");
+                    setLastCommit(null);
+                  }}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-6 font-bold shadow-md transition-all border-none"
+                >
+                  Auto-Fill & Go to Verifier
+                </Button>
+                <Button 
+                  onClick={() => setLastCommit(null)}
+                  variant="outline"
+                  className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl py-6 px-6 font-bold"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

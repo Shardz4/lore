@@ -6,7 +6,7 @@ import { useAuth } from "./AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: () => void }) {
+export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights: any[], onSuccess: (details: { proof: string, root: string, journal: string }) => void }) {
   const [isPinning, setIsPinning] = useState(false);
   const { isConnected, address } = useAccount();
   const [reputationScore, setReputationScore] = useState<number | null>(null);
@@ -87,11 +87,20 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
       
-      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${zkProof}\nPublic Journal CID: ${journalCid}\nMerkle Root: ${root}`);
+      console.log("=== LORE BATCH COMMIT SUCCESS ===");
+      console.log("Public Journal (JSON):", JSON.stringify(decisions, null, 2));
+      console.log("ZK-SNARK Proof:", zkProof);
+      console.log("Merkle Root:", root);
+      console.log("=================================");
+
       if (typeof window !== "undefined" && (window as any).pendo) {
         (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid, zkProof });
       }
-      onSuccess();
+      onSuccess({
+        proof: zkProof,
+        root: root,
+        journal: JSON.stringify(decisions, null, 2)
+      });
     } catch (err) {
       console.error(err);
       alert("Commit failed.");
