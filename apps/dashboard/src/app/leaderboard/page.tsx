@@ -14,7 +14,7 @@ type Agent = {
 
 export default function Leaderboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [backendOnline, setBackendOnline] = useState(false);
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -123,9 +123,11 @@ export default function Leaderboard() {
               {agents.length === 0 && (
                 <tr>
                   <td colSpan={4} className="p-12 text-center text-slate-500 font-medium">
-                    {backendOnline
-                      ? "No active agent reputation indexes found. Please ensure telemetry events are processed."
-                      : "Backend offline — agent data unavailable. Please ensure the Narrative Agent is running."}
+                    {backendOnline === null
+                      ? "Loading agent reputation index..."
+                      : backendOnline
+                        ? "No active agent reputation indexes found. Please ensure telemetry events are processed."
+                        : "Backend offline — agent data unavailable. Please ensure the Narrative Agent is running."}
                   </td>
                 </tr>
               )}
