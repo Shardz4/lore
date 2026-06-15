@@ -103,26 +103,13 @@ export default function Dashboard() {
         if (data && data.length > 0) {
           setAgents(data.sort((a: any, b: any) => b.score - a.score));
         } else {
-          // Fallback mock data
-          const mockAgents = [
-            { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
-            { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
-            { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
-            { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
-          ];
-          setAgents(mockAgents.sort((a: any, b: any) => b.score - a.score));
+          setAgents([]);
         }
       })
       .catch(err => {
-        console.warn("Leaderboard API unreachable, using fallback mock data:", err);
+        console.warn("Leaderboard API unreachable:", err);
         setBackendOnline(false);
-        const mockAgents = [
-          { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
-          { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
-          { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
-          { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
-        ];
-        setAgents(mockAgents.sort((a: any, b: any) => b.score - a.score));
+        setAgents([]);
       })
       .finally(() => setAgentsLoading(false));
   }, [API_BASE, apiToken, activeTab]);
@@ -135,9 +122,6 @@ export default function Dashboard() {
   };
 
   const selectedInsights = data?.insights?.filter((i: any) => selectedIds.has(i.insight.source_trace_id)) || [];
-
-  const isNarrativeMock = data?.insights?.length > 0 ? data.insights.every((i: any) => i.is_mock) : true;
-  const narrativeModelLabel = isNarrativeMock ? "Claude 3.5 Sonnet" : "Gemini";
 
   if (loading || !user) {
     return (
@@ -325,20 +309,20 @@ export default function Dashboard() {
                    </div>
                  </div>
                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                     backendOnline 
-                       ? "bg-emerald-50 border-emerald-100" 
-                       : "bg-red-50 border-red-200"
-                   }`}>
-                     <Activity className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-red-500'}`} />
-                   </div>
-                   <div className="text-left">
-                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Narrative ({narrativeModelLabel})</p>
-                     <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-red-600'}`}>
-                       {backendOnline ? "Active & Synthesizing" : "Offline"}
-                     </p>
-                   </div>
-                 </div>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                      backendOnline 
+                        ? "bg-emerald-50 border-emerald-100" 
+                        : "bg-slate-50 border-slate-200"
+                    }`}>
+                      <Activity className={`w-5 h-5 ${backendOnline ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Narrative Agent</p>
+                      <p className={`text-sm font-semibold ${backendOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                        {backendOnline ? "Active & Synthesizing" : "Status unknown"}
+                      </p>
+                    </div>
+                  </div>
                </div>
 
                {/* Agent Table */}

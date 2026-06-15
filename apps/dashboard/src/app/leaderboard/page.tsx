@@ -43,24 +43,11 @@ export default function Leaderboard() {
         if (data && data.length > 0) {
           setAgents(data.sort((a: any, b: any) => b.score - a.score));
         } else {
-          // Fallback mock data
-          const mockAgents: Agent[] = [
-            { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
-            { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
-            { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
-            { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
-          ];
-          setAgents(mockAgents.sort((a, b) => b.score - a.score));
+          setAgents([]);
         }
       } catch (err) {
-        console.warn("Leaderboard API unreachable, using fallback mock data:", err);
-        const mockAgents: Agent[] = [
-          { id: "agent-001", name: "Alpha Protocol (Mock)", successCount: 120, failCount: 0, score: 100, status: "TRUSTED" },
-          { id: "agent-002", name: "Beta Node (Mock)", successCount: 45, failCount: 1, score: 78.2, status: "WARNING" },
-          { id: "agent-003", name: "Rogue Vector (Mock)", successCount: 50, failCount: 4, score: 38.5, status: "SLASHED" },
-          { id: "agent-004", name: "Omega Core (Mock)", successCount: 12, failCount: 0, score: 100, status: "TRUSTED" }
-        ];
-        setAgents(mockAgents.sort((a, b) => b.score - a.score));
+        console.warn("Leaderboard API unreachable:", err);
+        setAgents([]);
       }
     }
 
@@ -79,7 +66,7 @@ export default function Leaderboard() {
           &larr; Back to Dashboard
         </a>
       </header>
-
+ 
       <main className="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div className="mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium tracking-wide mb-6">
@@ -94,7 +81,7 @@ export default function Leaderboard() {
             Agents falling below the 60% threshold are cryptographically banned from committing further data.
           </p>
         </div>
-
+ 
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden backdrop-blur-xl">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -130,6 +117,13 @@ export default function Leaderboard() {
                   </td>
                 </tr>
               ))}
+              {agents.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-12 text-center text-slate-500 font-medium">
+                    No active agent reputation indexes found. Please ensure the backend is running and has processed telemetry events.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

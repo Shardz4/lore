@@ -30,13 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error signing in with Google", error);
-      // If Firebase keys are missing (empty string), fall back to mock login for local dev ONLY
-      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NODE_ENV === "development") {
-        alert("Firebase keys are missing in .env.local! Falling back to Mock Login.");
-        setUser({ uid: "mock_user", displayName: "Mock User", email: "mock@example.com" } as User);
-      } else {
-        alert("Authentication failed. Please ensure popups are allowed by your browser or try again later.");
-      }
+      alert("Authentication failed. Please ensure Firebase variables are configured in .env.local and popups are allowed by your browser.");
     }
   };
 

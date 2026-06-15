@@ -25,7 +25,7 @@ func NewGeminiClient(apiKey string) *GeminiClient {
 
 func (c *GeminiClient) GenerateSummary(ctx context.Context, insight models.InsightBundle) (string, bool, error) {
 	if c.apiKey == "" {
-		return "Mock Narrative: Actionable PM summary would appear here if GEMINI_API_KEY was provided.", true, nil
+		return "", false, fmt.Errorf("gemini api key is empty; configure GEMINI_API_KEY in agents/narrative-agent/.env")
 	}
 
 	prompt := fmt.Sprintf("Act as an expert Product Manager. We detected a %s anomaly. Description: %s. Event count: %d. Provide a concise, actionable summary of what to investigate.", insight.InsightType, insight.Description, insight.EventCount)

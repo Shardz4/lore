@@ -35,11 +35,11 @@ func main() {
 	// Initialize the Novus MCP Client
 	novusClient := novus.NewMCPClient(cfg.NovusMcpEndpoint)
 	
-	// Try connecting (will gracefully fail and use fallback if endpoint is unreachable/requires OAuth)
+	// Try connecting to Novus MCP Server
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	err = novusClient.Connect(ctx)
 	if err != nil {
-		log.Printf("Failed to connect to Novus MCP Server, relying on fallback: %v", err)
+		log.Printf("Failed to connect to Novus MCP Server: %v", err)
 	}
 	cancel()
 

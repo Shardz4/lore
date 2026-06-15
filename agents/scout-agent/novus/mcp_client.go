@@ -3,7 +3,7 @@ package novus
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/mark3labs/mcp-go/client"
@@ -52,8 +52,7 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 
 func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, agentID string) (models.Payload, error) {
 	if c.mcpClient == nil {
-		log.Println("MCP Client not connected, using fallback generator")
-		return GenerateMockPayload(traceID, agentID), nil
+		return models.Payload{}, fmt.Errorf("mcp client not connected")
 	}
 
 	// Requesting data from Novus using a hypothetical tool name
@@ -63,13 +62,11 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 
 	resp, err := c.mcpClient.CallTool(ctx, toolCallReq)
 	if err != nil {
-		log.Printf("MCP Tool Call failed: %v, using fallback generator\n", err)
-		return GenerateMockPayload(traceID, agentID), nil
+		return models.Payload{}, fmt.Errorf("mcp tool call failed: %w", err)
 	}
 
 	if resp.IsError {
-		log.Printf("MCP Tool Call returned error, using fallback generator\n")
-		return GenerateMockPayload(traceID, agentID), nil
+		return models.Payload{}, fmt.Errorf("mcp tool call returned error response")
 	}
 
 	var rawData map[string]any
