@@ -382,7 +382,9 @@ export default function Dashboard() {
                        {agents.length === 0 && (
                          <tr>
                            <td colSpan={4} className="text-center p-12 text-slate-500">
-                             No agent records found. Ensure telemetry is processed to index active agent systems.
+                             {backendOnline 
+                               ? "No agent records found. Ensure telemetry is processed to index active agent systems."
+                               : "Backend offline — agent data unavailable. Please ensure the Narrative Agent is running."}
                            </td>
                          </tr>
                        )}

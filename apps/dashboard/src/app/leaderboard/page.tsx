@@ -14,6 +14,7 @@ type Agent = {
 
 export default function Leaderboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [backendOnline, setBackendOnline] = useState(false);
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -45,9 +46,11 @@ export default function Leaderboard() {
         } else {
           setAgents([]);
         }
+        setBackendOnline(true);
       } catch (err) {
         console.warn("Leaderboard API unreachable:", err);
         setAgents([]);
+        setBackendOnline(false);
       }
     }
 
@@ -120,7 +123,9 @@ export default function Leaderboard() {
               {agents.length === 0 && (
                 <tr>
                   <td colSpan={4} className="p-12 text-center text-slate-500 font-medium">
-                    No active agent reputation indexes found. Please ensure the backend is running and has processed telemetry events.
+                    {backendOnline
+                      ? "No active agent reputation indexes found. Please ensure telemetry events are processed."
+                      : "Backend offline — agent data unavailable. Please ensure the Narrative Agent is running."}
                   </td>
                 </tr>
               )}
