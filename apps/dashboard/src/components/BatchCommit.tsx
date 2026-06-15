@@ -87,7 +87,13 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
       
-      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${zkProof}\nPublic Journal CID: ${journalCid}\nMerkle Root: ${root}`);
+      console.log("=== LORE BATCH COMMIT SUCCESS ===");
+      console.log("Public Journal (JSON):", JSON.stringify(decisions, null, 2));
+      console.log("ZK-SNARK Proof:", zkProof);
+      console.log("Merkle Root:", root);
+      console.log("=================================");
+
+      alert(`ZK-Proof Generation & Commit Success!\n\nProof: ${zkProof}\nMerkle Root: ${root}\n\n👉 The Public Journal JSON has been logged to your browser's developer console. Press F12 to open the console and copy the JSON!`);
       if (typeof window !== "undefined" && (window as any).pendo) {
         (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid, zkProof });
       }
