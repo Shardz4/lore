@@ -30,8 +30,8 @@ function PlexusCanvas() {
     window.addEventListener("resize", resize);
 
     // Nodes
-    const COUNT = 50;
-    const LINK_DIST = 160;
+    const COUNT = 120;
+    const LINK_DIST = 140;
     interface Node { x: number; y: number; vx: number; vy: number; r: number }
     const nodes: Node[] = Array.from({ length: COUNT }, () => ({
       x: Math.random() * w,
@@ -59,7 +59,7 @@ function PlexusCanvas() {
           const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < LINK_DIST) {
-            const alpha = (1 - dist / LINK_DIST) * 0.12;
+            const alpha = (1 - dist / LINK_DIST) * 0.25;
             ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
@@ -74,7 +74,7 @@ function PlexusCanvas() {
       for (const n of nodes) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
         ctx.fill();
       }
 
@@ -97,7 +97,7 @@ function PlexusCanvas() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
-      style={{ opacity: 0.45 }}
+      style={{ opacity: 0.7 }}
     />
   );
 }
