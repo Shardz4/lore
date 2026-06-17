@@ -23,6 +23,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans selection:bg-emerald-500/30">
