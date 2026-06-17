@@ -176,8 +176,8 @@ export function VerificationPortal({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="font-semibold text-slate-500">On-Chain Ledger Status:</span>
-                <span className={`font-bold ${onChainVerified ? 'text-emerald-700' : 'text-amber-600'}`}>
-                  {onChainVerified ? "✅ VERIFIED ON-CHAIN" : "⚠️ NOT REGISTERED ON-CHAIN"}
+                <span className={`font-bold ${onChainVerified ? 'text-emerald-700' : 'text-slate-500'}`}>
+                  {onChainVerified ? "✅ VERIFIED ON-CHAIN" : "Not yet registered on-chain"}
                 </span>
               </div>
               {!onChainVerified && (

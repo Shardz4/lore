@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useWriteContract, useAccount } from "wagmi";
+import { useWriteContract, useAccount, usePublicClient } from "wagmi";
 import { generateTree, getRoot, Decision, generateProofForJournal, LORE_LEDGER_ADDRESS, LORE_LEDGER_ABI } from "@lore/crypto-utils";
 import { useAuth } from "./AuthProvider";
 
@@ -13,8 +13,10 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
   const [reputationLoading, setReputationLoading] = useState(true);
   const { user } = useAuth();
   const [apiToken, setApiToken] = useState<string>("");
+  const [commitError, setCommitError] = useState<string | null>(null);
 
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
 
   useEffect(() => {
     async function fetchToken() {
@@ -69,6 +71,7 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
   const handleCommit = async () => {
     if (selectedInsights.length === 0) return;
     setIsPinning(true);
+    setCommitError(null);
 
     try {
       // 1. Build the decisions from the selected insights
@@ -94,6 +97,28 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       }
       if (!cleanProof.startsWith("0x")) {
         cleanProof = "0x" + cleanProof;
+      }
+
+      // Pre-flight check: Run simulation first using publicClient to surface potential on-chain reverts BEFORE opening MetaMask
+      if (publicClient) {
+        console.log("Simulating contract transaction pre-flight...");
+        try {
+          await publicClient.simulateContract({
+            address: LORE_LEDGER_ADDRESS,
+            abi: LORE_LEDGER_ABI,
+            functionName: "commitVerifiedTrace",
+            args: [cleanProof as `0x${string}`, root],
+            account: address,
+          });
+        } catch (simErr: any) {
+          console.error("Simulation failed:", simErr);
+          const rawReason = simErr.shortMessage || simErr.message || String(simErr);
+          let friendlyReason = rawReason;
+          if (rawReason.includes("reverted") || rawReason.includes("revert")) {
+            friendlyReason = "The verifier contract rejected the cryptographic proof. This occurs because the mock front-end seal is not a valid RISC Zero Groth16 proof.";
+          }
+          throw new Error(`Simulation failed: ${friendlyReason}`);
+        }
       }
 
       console.log("Submitting commit batch on-chain transaction...");
@@ -126,9 +151,27 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
         root: root,
         journal: JSON.stringify(decisions, null, 2)
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Commit transaction failed or was rejected.");
+      let errorMsg = "Commit transaction failed or was rejected.";
+      const errMsgStr = err.message || String(err);
+      
+      if (
+        err.code === 4001 || 
+        errMsgStr.includes("rejected") || 
+        errMsgStr.includes("User rejected") ||
+        err.name === "UserRejectedRequestError"
+      ) {
+        errorMsg = "Transaction cancelled: You rejected the request in your wallet.";
+      } else if (errMsgStr.includes("Simulation failed")) {
+        errorMsg = errMsgStr;
+      } else if (err.shortMessage) {
+        errorMsg = `Transaction failed: ${err.shortMessage}`;
+      } else {
+        errorMsg = `Transaction failed: ${err.message || err}`;
+      }
+      
+      setCommitError(errorMsg);
     } finally {
       setIsPinning(false);
     }
@@ -137,36 +180,49 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
   if (selectedInsights.length === 0) return null;
 
   return (
-    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl p-4 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-3xl flex justify-between items-center shadow-[0_20px_60px_rgba(0,0,0,0.1),0_0_30px_rgba(16,185,129,0.15)] z-50">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-          <span className="font-bold text-xl text-emerald-600">{selectedInsights.length}</span>
+    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl flex flex-col gap-3 z-50">
+      {commitError && (
+        <div className="p-4 bg-red-50/95 backdrop-blur-xl border border-red-200 rounded-2xl flex items-center justify-between shadow-lg text-sm font-medium text-red-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-2">
+            <span>❌</span>
+            <span>{commitError}</span>
+          </div>
+          <button onClick={() => setCommitError(null)} className="text-red-500 hover:text-red-700 transition-colors font-bold text-xs uppercase px-2 py-1">
+            Dismiss
+          </button>
         </div>
-        <div>
-          <p className="font-bold text-slate-900 text-lg">Insights Selected</p>
-          <p className="text-sm text-slate-500 font-medium">Ready for Merkle Tree generation</p>
+      )}
+      <div className="w-full p-4 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-3xl flex justify-between items-center shadow-[0_20px_60px_rgba(0,0,0,0.1),0_0_30px_rgba(16,185,129,0.15)]">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
+            <span className="font-bold text-xl text-emerald-600">{selectedInsights.length}</span>
+          </div>
+          <div>
+            <p className="font-bold text-slate-900 text-lg">Insights Selected</p>
+            <p className="text-sm text-slate-500 font-medium">Ready for Merkle Tree generation</p>
+          </div>
         </div>
+        <Button 
+          onClick={handleCommit} 
+          disabled={isPinning || !isConnected || reputationLoading || (reputationScore !== null && reputationScore < 60)}
+          className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${
+            isPinning 
+              ? "bg-emerald-600/75 text-white cursor-wait"
+              : reputationLoading || !isConnected 
+                ? "bg-slate-400 text-white cursor-not-allowed" 
+                : (reputationScore !== null && reputationScore < 60) 
+                  ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" 
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
+          }`}
+        >
+          {reputationLoading ? "Checking reputation..." : (reputationScore !== null && reputationScore < 60) ? "BANNED: Reputation < 60%" : isPinning ? (
+            <span className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Generating ZK-Proof...
+            </span>
+          ) : "Sign & Commit Batch"}
+        </Button>
       </div>
-      <Button 
-        onClick={handleCommit} 
-        disabled={isPinning || !isConnected || reputationLoading || (reputationScore !== null && reputationScore < 60)}
-        className={`shadow-md transition-all border-none font-bold px-8 py-6 rounded-2xl text-base ${
-          isPinning 
-            ? "bg-emerald-600/75 text-white cursor-wait"
-            : reputationLoading || !isConnected 
-              ? "bg-slate-400 text-white cursor-not-allowed" 
-              : (reputationScore !== null && reputationScore < 60) 
-                ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed" 
-                : "bg-emerald-600 hover:bg-emerald-500 text-white"
-        }`}
-      >
-        {reputationLoading ? "Checking reputation..." : (reputationScore !== null && reputationScore < 60) ? "BANNED: Reputation < 60%" : isPinning ? (
-          <span className="flex items-center gap-2">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Generating ZK-Proof...
-          </span>
-        ) : "Sign & Commit Batch"}
-      </Button>
     </div>
   );
 }
