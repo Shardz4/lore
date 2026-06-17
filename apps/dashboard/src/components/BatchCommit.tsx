@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWriteContract, useAccount } from "wagmi";
-import { generateTree, getRoot, Decision, generateProofForJournal } from "@lore/crypto-utils";
+import { generateTree, getRoot, Decision, generateProofForJournal, LORE_LEDGER_ADDRESS, LORE_LEDGER_ABI } from "@lore/crypto-utils";
 import { useAuth } from "./AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -13,6 +13,8 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
   const [reputationLoading, setReputationLoading] = useState(true);
   const { user } = useAuth();
   const [apiToken, setApiToken] = useState<string>("");
+
+  const { writeContractAsync } = useWriteContract();
 
   useEffect(() => {
     async function fetchToken() {
@@ -78,23 +80,46 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       }));
 
       // 2. Generate ZK-Proof that is cryptographically bound to this specific journal
-      // (Uses the new generateProofForJournal instead of a random string)
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate ZKVM compute time
       const zkProof = generateProofForJournal(decisions);
       const journalCid = `Qm${Math.random().toString(36).substring(2, 15)}`;
       
       // 3. Generate Merkle Root of the public output
       const tree = generateTree(decisions);
       const root = getRoot(tree) as `0x${string}`;
+
+      // 4. Submit live transaction to Base Sepolia
+      let cleanProof = zkProof;
+      if (cleanProof.startsWith("0xzk")) {
+        cleanProof = "0x" + cleanProof.substring(4);
+      }
+      if (!cleanProof.startsWith("0x")) {
+        cleanProof = "0x" + cleanProof;
+      }
+
+      console.log("Submitting commit batch on-chain transaction...");
+      const txHash = await writeContractAsync({
+        address: LORE_LEDGER_ADDRESS,
+        abi: LORE_LEDGER_ABI,
+        functionName: "commitVerifiedTrace",
+        args: [cleanProof as `0x${string}`, root],
+      });
+      console.log("Transaction submitted. Hash:", txHash);
       
       console.log("=== LORE BATCH COMMIT SUCCESS ===");
       console.log("Public Journal (JSON):", JSON.stringify(decisions, null, 2));
       console.log("ZK-SNARK Proof:", zkProof);
       console.log("Merkle Root:", root);
+      console.log("Tx Hash:", txHash);
       console.log("=================================");
 
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Batch Committed", { insightCount: selectedInsights.length, merkleRoot: root, journalCid, zkProof });
+        (window as any).pendo.track("Batch Committed", { 
+          insightCount: selectedInsights.length, 
+          merkleRoot: root, 
+          journalCid, 
+          zkProof,
+          txHash
+        });
       }
       onSuccess({
         proof: zkProof,
@@ -103,7 +128,7 @@ export function BatchCommit({ selectedInsights, onSuccess }: { selectedInsights:
       });
     } catch (err) {
       console.error(err);
-      alert("Commit failed.");
+      alert("Commit transaction failed or was rejected.");
     } finally {
       setIsPinning(false);
     }

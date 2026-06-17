@@ -46,7 +46,7 @@ pub async fn run(redis_url: &str, tracer: opentelemetry_sdk::trace::Tracer) -> R
                                             span = tracer.start_with_context("analyze_novus_event", &parent_cx);
                                         }
                                         
-                                        if let Some(insight) = analyzer.process_event(payload.event, trace_id_str, agent_id) {
+                                        if let Some(insight) = analyzer.process_event(payload.event, trace_id_str, agent_id, s) {
                                             println!("Insight Generated: {:?}", insight);
                                             let insight_json = serde_json::to_string(&insight)?;
                                             let _: () = pub_con.xadd("lore:stream:insights", "*", &[("payload", &insight_json)]).await?;

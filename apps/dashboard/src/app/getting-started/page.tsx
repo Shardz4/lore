@@ -33,6 +33,16 @@ export default function GettingStarted() {
   const [activeTabLeft, setActiveTabLeft] = useState<"env" | "code">("env");
   const [activeTabRight, setActiveTabRight] = useState<"payload" | "code">("payload");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  const trackEvent = (name: string, metadata?: Record<string, any>) => {
+    if (typeof window !== "undefined" && (window as any).pendo) {
+      (window as any).pendo.track(name, metadata);
+    }
+  };
+
+  useEffect(() => {
+    trackEvent("Getting Started Page Viewed");
+  }, []);
   
   // Option 1: MCP Polling state
   const [isPolling, setIsPolling] = useState(true);
@@ -271,13 +281,13 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
             <div className="mb-6">
               <div className="flex items-center gap-2 border-b border-white/5 pb-2 mb-3">
                 <button 
-                  onClick={() => setActiveTabLeft("env")}
+                  onClick={() => { setActiveTabLeft("env"); trackEvent("Getting Started Config Clicked", { option: "MCP", tab: "env" }); }}
                   className={`text-xs font-semibold px-2 py-1 transition-all rounded ${activeTabLeft === "env" ? "bg-white/5 text-white" : "text-slate-400 hover:text-white"}`}
                 >
                   1. Configure Environment
                 </button>
                 <button 
-                  onClick={() => setActiveTabLeft("code")}
+                  onClick={() => { setActiveTabLeft("code"); trackEvent("Getting Started Config Clicked", { option: "MCP", tab: "code" }); }}
                   className={`text-xs font-semibold px-2 py-1 transition-all rounded ${activeTabLeft === "code" ? "bg-white/5 text-white" : "text-slate-400 hover:text-white"}`}
                 >
                   2. MCP Server Code
@@ -309,7 +319,7 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
                   <span className="text-xs font-semibold text-slate-300">Scout Ingestion Simulator</span>
                 </div>
                 <button 
-                  onClick={() => setIsPolling(!isPolling)}
+                  onClick={() => { setIsPolling(!isPolling); trackEvent("Getting Started Simulation Clicked", { option: "MCP", active: !isPolling }); }}
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-all flex items-center gap-1 ${isPolling ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-white/5 text-slate-400"}`}
                 >
                   <Activity className={`w-3 h-3 ${isPolling ? "animate-pulse" : ""}`} />
@@ -341,6 +351,7 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
             <span className="text-xs text-slate-500">Perfect for: Isolated hosts, Node.js/Python agent platforms.</span>
             <Link 
               href="/dashboard" 
+              onClick={() => trackEvent("Getting Started Verify Clicked", { option: "MCP" })}
               className="w-full sm:w-auto bg-emerald-500 text-black hover:bg-emerald-400 px-5 py-2 rounded-full text-xs font-semibold text-center transition-all"
             >
               Verify Endpoint
@@ -414,13 +425,13 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
             <div className="mb-6">
               <div className="flex items-center gap-2 border-b border-white/5 pb-2 mb-3">
                 <button 
-                  onClick={() => setActiveTabRight("payload")}
+                  onClick={() => { setActiveTabRight("payload"); trackEvent("Getting Started Config Clicked", { option: "Redis", tab: "payload" }); }}
                   className={`text-xs font-semibold px-2 py-1 transition-all rounded ${activeTabRight === "payload" ? "bg-white/5 text-white" : "text-slate-400 hover:text-white"}`}
                 >
                   1. JSON Payload Spec
                 </button>
                 <button 
-                  onClick={() => setActiveTabRight("code")}
+                  onClick={() => { setActiveTabRight("code"); trackEvent("Getting Started Config Clicked", { option: "Redis", tab: "code" }); }}
                   className={`text-xs font-semibold px-2 py-1 transition-all rounded ${activeTabRight === "code" ? "bg-white/5 text-white" : "text-slate-400 hover:text-white"}`}
                 >
                   2. Redis Publisher Code
@@ -452,7 +463,7 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
                   <span className="text-xs font-semibold text-slate-300">Redis Stream Logger</span>
                 </div>
                 <button 
-                  onClick={handleSimulateRedisPush}
+                  onClick={() => { handleSimulateRedisPush(); trackEvent("Getting Started Simulation Clicked", { option: "Redis" }); }}
                   className="text-[10px] bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3 py-1 rounded-lg transition-all flex items-center gap-1 shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:scale-105 active:scale-95"
                 >
                   <Play className="w-2.5 h-2.5 fill-current" />
@@ -484,6 +495,7 @@ await client.xAdd("lore:stream:raw", "*", payload);`;
             <span className="text-xs text-slate-500">Perfect for: High-throughput events, low-latency microservices.</span>
             <Link 
               href="/dashboard" 
+              onClick={() => trackEvent("Getting Started Verify Clicked", { option: "Redis" })}
               className="w-full sm:w-auto bg-violet-600 text-white hover:bg-violet-500 px-5 py-2 rounded-full text-xs font-semibold text-center transition-all shadow-[0_0_20px_rgba(124,58,237,0.2)]"
             >
               Verify Stream

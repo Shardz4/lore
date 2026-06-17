@@ -28,4 +28,5 @@ pub struct InsightBundle {
     pub source_trace_id: String,
     pub agent_id: String,
     pub timestamp: i64,
+    pub zk_proof: Option<String>,
 }
