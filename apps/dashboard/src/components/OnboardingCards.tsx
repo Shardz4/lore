@@ -78,6 +78,12 @@ export function OnboardingCards() {
     if (isAnimating) return;
     setIsAnimating(true);
     setCurrentIndex(index);
+    if (typeof window !== "undefined" && (window as any).pendo) {
+      (window as any).pendo.track("Onboarding Card Viewed", {
+        cardTitle: CARDS[index].title,
+        cardIndex: index,
+      });
+    }
     setTimeout(() => setIsAnimating(false), 300);
   };
 
@@ -90,6 +96,13 @@ export function OnboardingCards() {
         onClick={() => {
           setIsDismissed(false);
           setCurrentIndex(0);
+          if (typeof window !== "undefined" && (window as any).pendo) {
+            (window as any).pendo.track("Onboarding Guide Started");
+            (window as any).pendo.track("Onboarding Card Viewed", {
+              cardTitle: CARDS[0].title,
+              cardIndex: 0,
+            });
+          }
         }}
         className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-400 transition-all flex items-center justify-center hover:scale-110 group"
         title="Show getting started guide"

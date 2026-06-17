@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { generateTree, getRoot, Decision, verifyZKProof } from "@lore/crypto-utils";
+import { useReadContract } from "wagmi";
+import { generateTree, getRoot, Decision, verifyZKProof, LORE_LEDGER_ADDRESS, LORE_LEDGER_ABI } from "@lore/crypto-utils";
 
 export function VerificationPortal({ 
   initialPayload = "", 
@@ -15,10 +16,21 @@ export function VerificationPortal({
   const [payload, setPayload] = useState(initialPayload);
   const [root, setRoot] = useState(initialRoot);
   const [result, setResult] = useState<boolean | null>(null);
-
   const [proof, setProof] = useState(initialProof);
 
-  const handleVerify = () => {
+  // Read live ledger verification status from Sepolia smart contract
+  const cleanRootHex = root.startsWith("0x") ? root : `0x${root}`;
+  const { data: onChainVerified, refetch } = useReadContract({
+    address: LORE_LEDGER_ADDRESS,
+    abi: LORE_LEDGER_ABI,
+    functionName: "verifiedJournals",
+    args: [cleanRootHex.length === 66 ? (cleanRootHex as `0x${string}`) : "0x0000000000000000000000000000000000000000000000000000000000000000"],
+    query: {
+      enabled: cleanRootHex.length === 66,
+    }
+  });
+
+  const handleVerify = async () => {
     if (!payload || !proof || !root) {
       alert("Please fill in all three fields (Public Journal, ZK-SNARK Proof, and On-Chain Merkle Root).");
       setResult(false);
@@ -74,10 +86,21 @@ export function VerificationPortal({
 
       const isZkValid = verifyZKProof(proof, parsed as Decision[]);
       const calculatedRoot = getRoot(generateTree(parsed as Decision[]));
-      const isValid = isZkValid && (calculatedRoot === root);
+      const rootMatches = calculatedRoot.toLowerCase() === root.toLowerCase();
+      
+      if (cleanRootHex.length === 66) {
+        await refetch();
+      }
+
+      const isValid = isZkValid && rootMatches;
       setResult(isValid);
       if (typeof window !== "undefined" && (window as any).pendo) {
-        (window as any).pendo.track("Proof Verified", { isValid, onChainRoot: root, isZkValid });
+        (window as any).pendo.track("Proof Verified", { 
+          isValid, 
+          onChainRoot: root, 
+          isZkValid,
+          onChainVerified: !!onChainVerified
+        });
       }
     } catch (e) {
       alert("Invalid JSON payload or Proof. Ensure the payload is a valid JSON array.");
@@ -137,13 +160,33 @@ export function VerificationPortal({
       </Button>
 
       {result !== null && (
-        <div className={`mt-8 p-6 rounded-2xl text-center border shadow-sm ${result ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
-          <div className="font-sans font-black tracking-tight text-xl mb-1">
-            {result ? "✅ Proof Verified" : "❌ Verification Failed"}
+        <div className={`mt-8 p-6 rounded-2xl border shadow-sm ${result ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
+          <div className="font-sans font-black tracking-tight text-xl mb-1 flex items-center justify-center gap-2">
+            {result ? "✅ Local ZK-Proof Matches" : "❌ Verification Failed"}
           </div>
-          <p className="text-sm font-medium opacity-80">
-            {result ? "The proof is valid — the data matches the on-chain Merkle root and hasn't been tampered with." : "The proof doesn't match. The data may have been altered, or the wrong proof was provided."}
+          <p className="text-sm font-medium opacity-80 mb-4">
+            {result ? "The proof matches the public journal and the calculated Merkle root." : "The proof doesn't match. The data may have been altered, or the wrong proof was provided."}
           </p>
+          
+          {result && (
+            <div className={`mt-4 pt-4 border-t ${onChainVerified ? 'border-emerald-200' : 'border-slate-200'} text-left space-y-2`}>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-slate-500">Local Integrity check:</span>
+                <span className="text-emerald-700 font-bold">PASS</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-slate-500">On-Chain Ledger Status:</span>
+                <span className={`font-bold ${onChainVerified ? 'text-emerald-700' : 'text-slate-500'}`}>
+                  {onChainVerified ? "✅ VERIFIED ON-CHAIN" : "Not yet registered on-chain"}
+                </span>
+              </div>
+              {!onChainVerified && (
+                <p className="text-xs text-slate-500 mt-2 font-normal leading-relaxed">
+                  Note: While the cryptographic math is valid, this Merkle Root has not been submitted or finalized on the blockchain ledger yet. Use the Batch Commit bar to register it.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
