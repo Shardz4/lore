@@ -29,7 +29,7 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 		return err
 	}
 
-	err = sseClient.Start(ctx)
+	err = sseClient.Start(context.Background())
 	if err != nil {
 		return err
 	}
