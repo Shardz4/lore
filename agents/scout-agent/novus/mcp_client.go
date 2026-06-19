@@ -68,6 +68,7 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 
 	resp, err := c.mcpClient.CallTool(ctx, toolCallReq)
 	if err != nil {
+		c.mcpClient = nil // Reset client to force reconnection next time
 		return models.Payload{}, fmt.Errorf("mcp tool call failed: %w", err)
 	}
 
