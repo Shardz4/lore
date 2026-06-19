@@ -76,8 +76,18 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 		}
 	}
 
+	event := "novus_event"
+	if customEvent, ok := rawData["event"].(string); ok {
+		event = customEvent
+	}
+
+	innerData := rawData
+	if dataField, ok := rawData["data"].(map[string]any); ok {
+		innerData = dataField
+	}
+
 	return models.Payload{
-		Event: "novus_event",
+		Event: event,
 		Metadata: models.PayloadMetadata{
 			Timestamp: time.Now().UnixMilli(),
 			Telemetry: models.TelemetryInfo{
@@ -85,6 +95,6 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 				AgentID: agentID,
 			},
 		},
-		Data: rawData,
+		Data: innerData,
 	}, nil
 }

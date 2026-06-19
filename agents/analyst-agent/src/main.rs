@@ -5,12 +5,19 @@ pub mod analyzer;
 pub mod consumer;
 
 use opentelemetry::global;
+use opentelemetry::trace::TracerProvider;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = config::Config::load();
 
-    let tracer = telemetry::init_tracer(&cfg.otel_endpoint)?;
+    let tracer = match telemetry::init_tracer(&cfg.otel_endpoint) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("Warning: Failed to initialize OpenTelemetry tracer: {}. Falling back to local SDK tracer.", e);
+            opentelemetry_sdk::trace::TracerProvider::default().tracer("analyst-agent")
+        }
+    };
 
     consumer::run(&cfg.redis_url, tracer).await?;
 
