@@ -49,8 +49,6 @@ pkg/
 # Rust
 target/
 
-# Test Agent (Demo Only)
-/agents/demo-arbitrage-agent/
 
 # Gemini/Antigravity IDE configuration and brain artifacts
 .gemini/
