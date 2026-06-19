@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/mark3labs/mcp-go/client"
@@ -52,7 +53,12 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 
 func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, agentID string) (models.Payload, error) {
 	if c.mcpClient == nil {
-		return models.Payload{}, fmt.Errorf("mcp client not connected")
+		log.Println("MCP client not connected. Attempting to reconnect...")
+		err := c.Connect(ctx)
+		if err != nil {
+			return models.Payload{}, fmt.Errorf("mcp client not connected and reconnection failed: %w", err)
+		}
+		log.Println("Successfully connected to MCP Server!")
 	}
 
 	// Requesting data from Novus using a hypothetical tool name
