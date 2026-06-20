@@ -31,7 +31,7 @@ type TelemetryInfo struct {
 func main() {
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
-		redisURL = "redis://default:EYYYwImpcEWRdSKBLXWTZEkMHyCsMaXS@switchyard.proxy.rlwy.net:44176"
+		redisURL = "redis://localhost:6379"
 	}
 	opts, err := redis.ParseURL(redisURL)
 	if err != nil {

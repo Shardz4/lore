@@ -6,7 +6,7 @@ import uuid
 
 # Configuration
 # Default to public Railway Redis URL or local fallback
-REDIS_URL = os.getenv("REDIS_URL", "redis://default:EYYYwImpcEWRdSKBLXWTZEkMHyCsMaXS@switchyard.proxy.rlwy.net:44176")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 AGENT_ID = os.getenv("AGENT_ID", "arbitrage-scout-01")
 
 try:
