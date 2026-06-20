@@ -9,7 +9,7 @@ RUN go mod download
 
 # Copy source and build
 COPY . .
-RUN go build -o mcp_server mcp_server.go
+RUN go build -o mcp_server cmd/mcp-server/main.go
 
 # Runtime stage
 FROM alpine:latest
