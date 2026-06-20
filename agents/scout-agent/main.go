@@ -34,7 +34,7 @@ func main() {
 	defer publisher.Close()
 
 	// Initialize the Novus MCP Client
-	novusClient := novus.NewMCPClient(cfg.NovusMcpEndpoint)
+	novusClient := novus.NewMCPClient(cfg.NovusMcpEndpoint, cfg.NovusClientID, cfg.NovusClientSecret, cfg.NovusAppID)
 	
 	// Try connecting to Novus MCP Server
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

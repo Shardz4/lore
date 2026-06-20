@@ -10,11 +10,14 @@ import (
 )
 
 type Config struct {
-	NovusMcpEndpoint string
-	RedisAddr        string
-	OtelEndpoint     string
-	PollInterval     time.Duration
-	AgentID          string
+	NovusMcpEndpoint  string
+	NovusClientID     string
+	NovusClientSecret string
+	NovusAppID        string
+	RedisAddr         string
+	OtelEndpoint      string
+	PollInterval      time.Duration
+	AgentID           string
 }
 
 func Load() *Config {
@@ -38,6 +41,13 @@ func Load() *Config {
 		mcpEndpoint = "https://novus-api.pendo.io/mcp"
 	}
 
+	clientID := strings.TrimSpace(os.Getenv("NOVUS_CLIENT_ID"))
+	clientSecret := strings.TrimSpace(os.Getenv("NOVUS_CLIENT_SECRET"))
+	appID := strings.TrimSpace(os.Getenv("NOVUS_APP_ID"))
+	if appID == "" {
+		appID = "-323232"
+	}
+
 	pollIntervalStr := strings.TrimSpace(os.Getenv("POLL_INTERVAL"))
 	pollInterval, err := time.ParseDuration(pollIntervalStr)
 	if err != nil || pollInterval == 0 {
@@ -50,10 +60,13 @@ func Load() *Config {
 	}
 
 	return &Config{
-		NovusMcpEndpoint: mcpEndpoint,
-		RedisAddr:        redisAddr,
-		OtelEndpoint:     otelEndpoint,
-		PollInterval:     pollInterval,
-		AgentID:          agentID,
+		NovusMcpEndpoint:  mcpEndpoint,
+		NovusClientID:     clientID,
+		NovusClientSecret: clientSecret,
+		NovusAppID:        appID,
+		RedisAddr:         redisAddr,
+		OtelEndpoint:      otelEndpoint,
+		PollInterval:      pollInterval,
+		AgentID:           agentID,
 	}
 }
