@@ -8,6 +8,94 @@ interface FeedCardProps {
   onSelect: (checked: boolean) => void;
 }
 
+function renderTextWithBold(text: string) {
+  // Regex to split on **bold** text
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-semibold text-slate-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    // Also parse italic *word* if any
+    const italicParts = part.split(/(\*[^*]+\*)/g);
+    if (italicParts.length > 1) {
+      return italicParts.map((subPart, j) => {
+        if (subPart.startsWith("*") && subPart.endsWith("*")) {
+          return <em key={j} className="italic text-slate-800">{subPart.slice(1, -1)}</em>;
+        }
+        return subPart;
+      });
+    }
+    return part;
+  });
+}
+
+function parseMarkdown(text: string) {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+  
+  return lines.map((line, index) => {
+    let trimmed = line.trim();
+    if (!trimmed) {
+      return <div key={index} className="h-2" />;
+    }
+
+    // 1. Headers
+    if (trimmed.startsWith("### ")) {
+      return (
+        <h4 key={index} className="text-sm font-semibold text-slate-800 mt-3 mb-1">
+          {renderTextWithBold(trimmed.substring(4))}
+        </h4>
+      );
+    }
+    if (trimmed.startsWith("## ")) {
+      return (
+        <h3 key={index} className="text-sm font-bold text-slate-900 mt-4 mb-2 border-b border-slate-100 pb-1">
+          {renderTextWithBold(trimmed.substring(3))}
+        </h3>
+      );
+    }
+    if (trimmed.startsWith("# ")) {
+      return (
+        <h2 key={index} className="text-base font-bold text-slate-900 mt-4 mb-2">
+          {renderTextWithBold(trimmed.substring(2))}
+        </h2>
+      );
+    }
+
+    // 2. List items
+    if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      return (
+        <li key={index} className="ml-4 list-disc text-sm text-slate-700 my-0.5 leading-relaxed">
+          {renderTextWithBold(trimmed.substring(2))}
+        </li>
+      );
+    }
+
+    // 3. Numbered lists
+    const numMatch = trimmed.match(/^(\d+)\.\s(.*)/);
+    if (numMatch) {
+      return (
+        <div key={index} className="ml-2 my-1.5 text-sm text-slate-700 leading-relaxed font-semibold">
+          <span className="text-emerald-600 mr-1.5">{numMatch[1]}.</span>
+          <span className="font-normal text-slate-700">{renderTextWithBold(numMatch[2])}</span>
+        </div>
+      );
+    }
+
+    // 4. Standard paragraph
+    return (
+      <p key={index} className="text-sm text-slate-700 my-1 leading-relaxed">
+        {renderTextWithBold(trimmed)}
+      </p>
+    );
+  });
+}
+
 export function FeedCard({ insight, isSelected, onSelect }: FeedCardProps) {
   const isMock = insight.is_mock;
   const data = insight.insight;
@@ -45,9 +133,10 @@ export function FeedCard({ insight, isSelected, onSelect }: FeedCardProps) {
         <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-200 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-teal-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
           <p className="text-xs font-bold text-emerald-600 mb-2 tracking-wider uppercase">AI Summary</p>
-          <p className="text-sm text-slate-700 leading-relaxed">{insight.narrative}</p>
+          <div className="space-y-1">{parseMarkdown(insight.narrative)}</div>
         </div>
       </CardContent>
     </Card>
   );
 }
+

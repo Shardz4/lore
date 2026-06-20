@@ -9,12 +9,16 @@ impl Config {
     pub fn load() -> Self {
         let _ = dotenvy::dotenv();
 
-        let mut redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
-        redis_url = redis_url.replace("$$", "$");
+        let redis_url = env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+            .replace("$$", "$");
         let otel_endpoint = env::var("OTEL_EXPORTER_OTLP_ENDPOINT").unwrap_or_else(|_| "http://localhost:4317".to_string());
 
         Self {
-            redis_url,
+            redis_url: {
+                println!("Loaded REDIS_URL: {}", redis_url);
+                redis_url
+            },
             otel_endpoint,
         }
     }

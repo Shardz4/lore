@@ -19,13 +19,14 @@ func main() {
 
 	tp, err := telemetry.InitTracer(cfg.OtelEndpoint)
 	if err != nil {
-		log.Fatalf("Failed to initialize tracer: %v", err)
+		log.Printf("Warning: Failed to initialize OTLP tracer: %v. Continuing without trace exports.", err)
+	} else {
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				log.Printf("Error shutting down tracer: %v", err)
+			}
+		}()
 	}
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Printf("Error shutting down tracer: %v", err)
-		}
-	}()
 
 	tracer := otel.Tracer("scout-agent")
 

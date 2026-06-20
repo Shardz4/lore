@@ -15,7 +15,7 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Copy the compiled binary
-COPY --from=builder /usr/src/app/target/release/analyst-agent /app/analyst-agent
+COPY --from=builder /usr/src/app/agents/analyst-agent/target/release/analyst-agent /app/analyst-agent
 
 # Run the binary
 CMD ["/app/analyst-agent"]

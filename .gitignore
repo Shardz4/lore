@@ -48,3 +48,7 @@ pkg/
 
 # Rust
 target/
+
+
+# Gemini/Antigravity IDE configuration and brain artifacts
+.gemini/

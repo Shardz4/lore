@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/mark3labs/mcp-go/client"
@@ -28,7 +29,7 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 		return err
 	}
 
-	err = sseClient.Start(ctx)
+	err = sseClient.Start(context.Background())
 	if err != nil {
 		return err
 	}
@@ -52,7 +53,12 @@ func (c *MCPClient) Connect(ctx context.Context) error {
 
 func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, agentID string) (models.Payload, error) {
 	if c.mcpClient == nil {
-		return models.Payload{}, fmt.Errorf("mcp client not connected")
+		log.Println("MCP client not connected. Attempting to reconnect...")
+		err := c.Connect(ctx)
+		if err != nil {
+			return models.Payload{}, fmt.Errorf("mcp client not connected and reconnection failed: %w", err)
+		}
+		log.Println("Successfully connected to MCP Server!")
 	}
 
 	// Requesting data from Novus using a hypothetical tool name
@@ -62,6 +68,7 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 
 	resp, err := c.mcpClient.CallTool(ctx, toolCallReq)
 	if err != nil {
+		c.mcpClient = nil // Reset client to force reconnection next time
 		return models.Payload{}, fmt.Errorf("mcp tool call failed: %w", err)
 	}
 
@@ -76,8 +83,18 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 		}
 	}
 
+	event := "novus_event"
+	if customEvent, ok := rawData["event"].(string); ok {
+		event = customEvent
+	}
+
+	innerData := rawData
+	if dataField, ok := rawData["data"].(map[string]any); ok {
+		innerData = dataField
+	}
+
 	return models.Payload{
-		Event: "novus_event",
+		Event: event,
 		Metadata: models.PayloadMetadata{
 			Timestamp: time.Now().UnixMilli(),
 			Telemetry: models.TelemetryInfo{
@@ -85,6 +102,6 @@ func (c *MCPClient) FetchBehavioralData(ctx context.Context, traceID string, age
 				AgentID: agentID,
 			},
 		},
-		Data: rawData,
+		Data: innerData,
 	}, nil
 }

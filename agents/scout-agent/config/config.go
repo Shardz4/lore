@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -22,28 +23,28 @@ func Load() *Config {
 		log.Println("No .env file found, relying on environment variables")
 	}
 
-	redisAddr := os.Getenv("REDIS_ADDR")
+	redisAddr := strings.TrimSpace(os.Getenv("REDIS_ADDR"))
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
 	}
 
-	otelEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	otelEndpoint := strings.TrimSpace(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
 	if otelEndpoint == "" {
 		otelEndpoint = "localhost:4317"
 	}
 
-	mcpEndpoint := os.Getenv("NOVUS_MCP_ENDPOINT")
+	mcpEndpoint := strings.TrimSpace(os.Getenv("NOVUS_MCP_ENDPOINT"))
 	if mcpEndpoint == "" {
 		mcpEndpoint = "https://novus-api.pendo.io/mcp"
 	}
 
-	pollIntervalStr := os.Getenv("POLL_INTERVAL")
+	pollIntervalStr := strings.TrimSpace(os.Getenv("POLL_INTERVAL"))
 	pollInterval, err := time.ParseDuration(pollIntervalStr)
 	if err != nil || pollInterval == 0 {
 		pollInterval = 5 * time.Minute // default to 5 minutes
 	}
 
-	agentID := os.Getenv("AGENT_ID")
+	agentID := strings.TrimSpace(os.Getenv("AGENT_ID"))
 	if agentID == "" {
 		agentID = "agent-001" // default telemetry agent ID
 	}

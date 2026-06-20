@@ -8,9 +8,13 @@ use crate::models::RawPayload;
 use crate::analyzer::Analyzer;
 
 pub async fn run(redis_url: &str, tracer: opentelemetry_sdk::trace::Tracer) -> Result<(), Box<dyn std::error::Error>> {
-    let client = redis::Client::open(redis_url)?;
-    let mut con = client.get_tokio_connection().await?;
-    let mut pub_con = client.get_tokio_connection().await?;
+    let connection_info = redis::IntoConnectionInfo::into_connection_info(redis_url)?;
+    println!("Loaded REDIS_URL debug: {:?}", redis_url);
+    println!("Parsed Redis Connection Info: {:?}", connection_info);
+    println!("Parsed Password debug: {:?}", connection_info.redis.password);
+    let client = redis::Client::open(connection_info)?;
+    let mut con = client.get_multiplexed_tokio_connection().await?;
+    let mut pub_con = client.get_multiplexed_tokio_connection().await?;
 
     let stream = "lore:stream:raw";
     let group = "scout_processors";
@@ -31,7 +35,7 @@ pub async fn run(redis_url: &str, tracer: opentelemetry_sdk::trace::Tracer) -> R
                 for key in stream_reply.keys {
                     for id in key.ids {
                         if let Some(payload_str) = id.map.get("payload") {
-                            if let redis::Value::Data(data) = payload_str {
+                            if let redis::Value::BulkString(data) = payload_str {
                                 if let Ok(s) = std::str::from_utf8(data) {
                                     if let Ok(payload) = serde_json::from_str::<RawPayload>(s) {
                                         let trace_id_str = payload.metadata.telemetry.trace_id;
