@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for Rust Analyst Agent in Monorepo
-FROM rust:slim AS builder
+FROM rust:latest-slim AS builder
 
 WORKDIR /usr/src/app
 
