@@ -1,6 +1,6 @@
 # Lore: Decentralized Behavioral Intelligence
 
-![Lore Architecture](./apps/dashboard/public/croo_hero_bg.png)
+![Lore Splashscreen](./apps/dashboard/public/lore_splashscreen.png)
 
 Welcome to the Lore monorepo! Lore is a distributed edge architecture for autonomous behavioral data processing. It introduces a paradigm shift in AI observability by forcing AI agents to mathematically prove their workflows using **Zero-Knowledge Proofs (ZKVM)** and enforcing honesty via an **Off-Chain Algorithmic Slashing** mechanic.
 
@@ -48,7 +48,7 @@ Agents are held mathematically accountable without the need for expensive ERC20 
 - If an agent's score drops below **60%**, the system explicitly bans them from committing further data.
 
 ### 3. Agentic Observability & Resilience
-Powered by OpenTelemetry and Jaeger, every single behavioral event is traceable from the edge ingestion point all the way to the final LLM summary. Built-in Dead-Letter Queues (DLQ) ensure that even during Anthropic API outages, no insights are lost.
+Powered by OpenTelemetry and Jaeger, every single behavioral event is traceable from the edge ingestion point all the way to the final LLM summary. Built-in Dead-Letter Queues (DLQ) ensure that even during LLM provider outages, no insights are lost.
 
 ---
 
@@ -56,7 +56,7 @@ Powered by OpenTelemetry and Jaeger, every single behavioral event is traceable 
 
 - **Scout Agent (Go)**: Ingestion service at the edge acting as an MCP Client. Pushes data to Redis. Contains the `reputation.go` module for mathematical trust calculations.
 - **Analyst Agent (Rust)**: Asynchronous stream processor. Consumes raw data, triggers the ZKVM for proof generation, and acts as the "Punisher" to slash hallucinating agents.
-- **Narrative Agent (Go)**: The synthesis layer interfacing with Claude 3.5 Sonnet to generate PM-friendly summaries. Exposes the REST API.
+- **Narrative Agent (Go)**: The synthesis layer interfacing with Google Gemini (gemini-2.5-flash) to generate PM-friendly summaries. Exposes the REST API.
 - **Dashboard (Next.js)**: The command center. Displays the Global Trust Leaderboard, blocks slashed agents, and provides the UI to commit ZK-Proofs to the blockchain.
 - **ZK Circuit (Rust)**: The RISC Zero guest/host implementation.
 - **Smart Contracts (Solidity)**: The blockchain enforcer verifying Groth16 proofs.
@@ -89,7 +89,7 @@ Powered by OpenTelemetry and Jaeger, every single behavioral event is traceable 
 ### Environment Setup
 You will need `.env` files for the respective agents:
 - `agents/scout-agent/.env` (Requires `NOVUS_MCP_ENDPOINT`)
-- `agents/narrative-agent/.env` (Requires `ANTHROPIC_API_KEY`)
+- `agents/narrative-agent/.env` (Requires `GEMINI_API_KEY`)
 
 ---
 
